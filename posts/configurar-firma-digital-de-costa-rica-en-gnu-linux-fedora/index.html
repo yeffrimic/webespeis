@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html prefix="og: http://ogp.me/ns# article: http://ogp.me/ns/article# " lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo configurar Firma Digital de Costa Rica en GNU/Linux Fedora 23 | JáquerEspeis</title>
+<link href="../../assets/css/all-nocdn.css" rel="stylesheet" type="text/css">
+<meta name="theme-color" content="#5670d4">
+<meta name="generator" content="Nikola (getnikola.com)">
+<link rel="alternate" type="application/rss+xml" title="RSS (en)" href="../../en/rss.xml">
+<link rel="alternate" type="application/rss+xml" title="RSS (es)" href="../../rss.xml">
+<link rel="canonical" href="http://www.jaquerespeis.org/posts/configurar-firma-digital-de-costa-rica-en-gnu-linux-fedora/">
+<!--[if lt IE 9]><script src="../../assets/js/html5.js"></script><![endif]--><meta name="author" content="JáquerEspeis">
+<link rel="prev" href="../configurar-evolution-correo-electronico-firma-digital/" title="Cómo configurar Evolution para enviar correos electrónicos firmados digitalmente" type="text/html">
+<link rel="next" href="../instalar-firma-digital-costa-rica-linux-fedora-24/" title="Cómo instalar Firma Digital de Costa Rica en GNU/Linux Fedora 24" type="text/html">
+<meta property="og:site_name" content="JáquerEspeis">
+<meta property="og:title" content="Cómo configurar Firma Digital de Costa Rica en GNU/Linux Fedora 23">
+<meta property="og:url" content="http://www.jaquerespeis.org/posts/configurar-firma-digital-de-costa-rica-en-gnu-linux-fedora/">
+<meta property="og:description" content="Actualización 2: esta guía ha quedado obsoleta, se recomienda seguir la guía para Fedora 24, que probablemente también funcione para Fedora 23, incluye cómo instalar los certificados y funcionalidad p">
+<meta property="og:type" content="article">
+<meta property="article:published_time" content="2016-06-30T04:06:28-06:00">
+<meta property="article:tag" content="Firma digital">
+<meta property="article:tag" content="Software libre">
+<link rel="alternate" hreflang="en" href="../../en/posts/configurar-firma-digital-de-costa-rica-en-gnu-linux-fedora/">
+</head>
+<body>
+<a href="#content" class="sr-only sr-only-focusable">Ir al contenido principal</a>
+
+<!-- Menubar -->
+
+<nav class="navbar navbar-inverse navbar-static-top"><div class="container">
+<!-- This keeps the margins nice -->
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-navbar" aria-controls="bs-navbar" aria-expanded="false">
+            <span class="sr-only">Mostrar navegación</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="http://www.jaquerespeis.org/">
+
+                <span id="blog-title">JáquerEspeis</span>
+            </a>
+        </div>
+<!-- /.navbar-header -->
+        <div class="collapse navbar-collapse" id="bs-navbar" aria-expanded="false">
+            <ul class="nav navbar-nav">
+<li>
+<a href="../../archive.html">Archivo</a>
+                </li>
+<li>
+<a href="../../categories/">Etiquetas</a>
+                </li>
+<li>
+<a href="../../rss.xml">Canal RSS</a>
+
+                
+            </li>
+</ul>
+<ul class="nav navbar-nav navbar-right">
+<li>
+            </li>
+<li><a href="http://www.jaquerespeis.org/en/" rel="alternate" hreflang="en">English</a></li>
+
+                
+                    
+    <li>
+    <a href="index.src.html" id="sourcelink">Código fuente</a>
+    </li>
+
+                
+            </ul>
+</div>
+<!-- /.navbar-collapse -->
+    </div>
+<!-- /.container -->
+</nav><!-- End of Menubar --><div class="container" id="content" role="main">
+    <div class="body-content">
+        <!--Body content-->
+        <div class="row">
+            
+            
+<article class="post-text h-entry hentry postpage" itemscope="itemscope" itemtype="http://schema.org/Article"><header><h1 class="p-name entry-title" itemprop="headline name"><a href="." class="u-url">Cómo configurar Firma Digital de Costa Rica en GNU/Linux Fedora 23</a></h1>
+
+        <div class="metadata">
+            <p class="byline author vcard"><span class="byline-name fn" itemprop="author">
+                    JáquerEspeis
+            </span></p>
+            <p class="dateline"><a href="." rel="bookmark"><time class="published dt-published" datetime="2016-06-30T04:06:28-06:00" itemprop="datePublished" title="2016-06-30 04:06">2016-06-30 04:06</time></a></p>
+            
+        <p class="sourceline"><a href="index.src.html" class="sourcelink">Código fuente</a></p>
+
+        </div>
+        
+
+    </header><div class="e-content entry-content" itemprop="articleBody text">
+    <p><strong>Actualización 2:</strong> esta guía ha quedado obsoleta, se recomienda seguir la guía para Fedora 24, que probablemente también funcione para Fedora 23, incluye cómo instalar los certificados y funcionalidad para todos los usuarios del sistema.</p>
+<p><strong>Actualización:</strong> la configuración del XML de esta guía ya no es necesaria si se instala el RPM del nuevo instalador que proporciona el centro de soporte de Firma Digital. Antes el instalador solamente incluía paquetes DEB.</p>
+<h2>Requerimientos</h2>
+<p>Instalar el controlador del lector de tarjetas y sus dependencias:</p>
+<pre>sudo dnf -y install pcsc-lite-ccid</pre>
+<p>Iniciar el servicio <kbd>pcscd</kbd> si no lo está:</p>
+<pre>sudo systemctl start pcscd</pre>
+<p>Para asegurarse de que el servicio <kbd>pcscd</kbd> se inicie al arrancar el sistema:</p>
+<pre>sudo systemctl enable pcscd</pre>
+<h2>Descarga</h2>
+<p>Descargar el “instalador” para usuarios Linux en la sección de descargas del <a href="https://www.soportefirmadigital.com/">centro de soporte de Firma Digital</a> y descomprimir el zip.</p>
+<h2>Solución de problemas</h2>
+<p>Para que el módulo PKCS#11 funcione correctamente con las tarjetas inteligentes de Firma Digital más recientes se tiene que crear un archivo XML en una ruta específica del sistema:</p>
+<pre>sudo mkdir /etc/Athena
+sudo gedit /etc/Athena/IDPClientDB.xml
+</pre>
+<p>En la ventana del editor de textos gedit, pegar el siguiente texto:</p>
+<pre>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;IDProtect&gt;
+ &lt;TokenLibs&gt;
+  &lt;IDProtect&gt;
+   &lt;Cards&gt;
+    &lt;IDProtectXF&gt;
+     &lt;ATR type='hexBinary'&gt;3BDC00FF8091FE1FC38073C821106600000000000000&lt;/ATR&gt;
+     &lt;ATRMask type='hexBinary'&gt;FFFF00FFF0FFFFFFFFFFFFFFFFF0FF00000000000000&lt;/ATRMask&gt;
+    &lt;/IDProtectXF&gt;
+   &lt;/Cards&gt;
+  &lt;/IDProtect&gt;
+ &lt;/TokenLibs&gt;
+&lt;/IDProtect&gt;
+</pre>
+<p>Guardar. Ahora ya está lista para probar.</p>
+<p>Se pueden seguir los pasos de configuración del módulo indicados en el sitio web del centro de soporte de Firma Digital para Firefox si así se desea.</p>
+<h2>Prueba</h2>
+<p>Para comprobar por línea de comandos si el módulo PKCS#11 reconoce la tarjeta:</p>
+<p>Instalar el paquete <kbd>opensc</kbd>, que proporciona la herramienta <kbd>pkcs11-tool</kbd>:</p>
+<pre>sudo dnf -y install opensc</pre>
+<p>Realizar una prueba de listado de objetos, que pedirá el PIN:</p>
+<pre>pkcs11-tool --module "~/Descargas/Firma Digital/Firma Digital/Libreria/x64/libASEP11.so" -l -O</pre>
+<p>Reemplazar la ruta hacia <kbd>libASEP11.so</kbd> del ejemplo por la adecuada.</p>
+<p>Si funcionó correctamente deberá mostrar que existen 2 certificados y 2 claves. Ejemplo de la salida:</p>
+<pre>Using slot 0 with a present token (0x0)
+Logging in to "IDProtect#XXXXXXXXXXXXXXXX".
+Please enter User PIN:
+Certificate Object, type = X.509 cert
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Certificate Object, type = X.509 cert
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Private Key Object; RSA
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Usage: decrypt, sign
+Private Key Object; RSA
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Usage: sign
+</pre>
+    </div>
+    <aside class="postpromonav"><nav><ul itemprop="keywords" class="tags">
+<li><a class="tag p-category" href="../../categories/firma-digital/" rel="tag">Firma digital</a></li>
+            <li><a class="tag p-category" href="../../categories/software-libre/" rel="tag">Software libre</a></li>
+        </ul>
+<ul class="pager hidden-print">
+<li class="previous">
+                <a href="../configurar-evolution-correo-electronico-firma-digital/" rel="prev" title="Cómo configurar Evolution para enviar correos electrónicos firmados digitalmente">Publicación anterior</a>
+            </li>
+            <li class="next">
+                <a href="../instalar-firma-digital-costa-rica-linux-fedora-24/" rel="next" title="Cómo instalar Firma Digital de Costa Rica en GNU/Linux Fedora 24">Siguiente publicación</a>
+            </li>
+        </ul></nav></aside></article>
+</div>
+        <!--End of body content-->
+
+        <footer id="footer"><a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/"><img alt="Licencia Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png"></a>Publicado bajo una licencia <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons Attribution-ShareAlike 4.0 International</a>. - Creado con <a href="https://getnikola.com" rel="nofollow">Nikola</a>
+            
+        </footer>
+</div>
+</div>
+
+
+            <script src="../../assets/js/all-nocdn.js"></script><script src="../../assets/js/colorbox-i18n/jquery.colorbox-es.js"></script><script>$('a.image-reference:not(.islink) img:not(.islink)').parent().colorbox({rel:"gal",maxWidth:"100%",maxHeight:"100%",scalePhotos:true});</script><!-- fancy dates --><script>
+    moment.locale("es");
+    fancydates(0, "YYYY-MM-DD HH:mm");
+    </script><!-- end fancy dates -->
+</body>
+</html>

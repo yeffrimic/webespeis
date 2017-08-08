@@ -1,0 +1,911 @@
+<?xml version="1.0" encoding="utf-8"?>
+<?xml-stylesheet type="text/xsl" href="../assets/xml/rss.xsl" media="all"?><rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel><title>JáquerEspeis</title><link>http://www.jaquerespeis.org/</link><description></description><atom:link type="application/rss+xml" href="http://www.jaquerespeis.org/en/rss.xml" rel="self"></atom:link><language>en</language><lastBuildDate>Tue, 08 Aug 2017 20:05:33 GMT</lastBuildDate><generator>Nikola (getnikola.com)</generator><docs>http://blogs.law.harvard.edu/tech/rss</docs><item><title>HolaMundo con ethereum</title><link>http://www.jaquerespeis.org/en/posts/postsholamundo-ethereum/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;div&gt;&lt;h2&gt;Lista de herramientas&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;testRPC&lt;/li&gt;
+&lt;li&gt;nvm&lt;/li&gt;
+&lt;li&gt;web3&lt;/li&gt;
+&lt;li&gt;geth&lt;/li&gt;
+&lt;li&gt;solc&lt;/li&gt;
+&lt;li&gt;web3&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Instalación&lt;/h2&gt;
+&lt;h3&gt;Linux&lt;/h3&gt;
+&lt;p&gt;Los siguientes pasos muestras como instalar las herramientas necesarias en Ubuntu 17.04&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.2/install.sh | bash
+nvm ls-remote
+nvm install &amp;lt;la ultima LTS&amp;gt;
+npm install -g ethereumjs-testrpc
+npm install solc
+npm install web3
+&lt;/pre&gt;
+
+
+&lt;h3&gt;Mac&lt;/h3&gt;
+&lt;p&gt;Para instalar nvm es necesario tener &lt;a href="https://brew.sh/"&gt;brew&lt;/a&gt;&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;brew install nvm
+nvm ls-remote
+nvm install &amp;lt;la ultima LTS&amp;gt;
+npm install -g ethereumjs-testrpc
+npm install solc
+npm install web3
+&lt;/pre&gt;
+
+
+&lt;h2&gt;Desarrollo&lt;/h2&gt;
+&lt;p&gt;Con el editor preferido, escribir el contrato, para esto se va a utilizar el lenguage &lt;a href="https://solidity.readthedocs.io/en/develop/"&gt;&lt;strong&gt;solidity&lt;/strong&gt;&lt;/a&gt;, sin embargo existen otras opciones como &lt;a href="https://github.com/ethereum/wiki/wiki/Serpent"&gt;&lt;strong&gt;serpent&lt;/strong&gt;&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Para compilar el contrato vamos a utilizar el comando &lt;code&gt;solc --bin --optimize &amp;lt;archivo.sol&amp;gt;&lt;/code&gt;&lt;/p&gt;
+&lt;p&gt;Escribit el siguiente contrato en un archivo llamado Voting.sol&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;pragma solidity ^0.4.11;
+// We have to specify what version of compiler this code will compile with
+
+contract Voting {
+  /* mapping field below is equivalent to an associative array or hash.
+  The key of the mapping is candidate name stored as type bytes32 and value is
+  an unsigned integer to store the vote count
+  */
+
+  mapping (bytes32 =&amp;gt; uint8) public votesReceived;
+
+  /* Solidity doesn't let you pass in an array of strings in the constructor (yet).
+  We will use an array of bytes32 instead to store the list of candidates
+  */
+
+  bytes32[] public candidateList;
+
+  /* This is the constructor which will be called once when you
+  deploy the contract to the blockchain. When we deploy the contract,
+  we will pass an array of candidates who will be contesting in the election
+  */
+  function Voting(bytes32[] candidateNames) {
+    candidateList = candidateNames;
+  }
+
+  // This function returns the total votes a candidate has received so far
+  function totalVotesFor(bytes32 candidate) returns (uint8) {
+    if (validCandidate(candidate) == false) throw;
+    return votesReceived[candidate];
+  }
+
+  // This function increments the vote count for the specified candidate. This
+  // is equivalent to casting a vote
+  function voteForCandidate(bytes32 candidate) {
+    if (validCandidate(candidate) == false) throw;
+    votesReceived[candidate] += 1;
+  }
+
+  function validCandidate(bytes32 candidate) returns (bool) {
+    for(uint i = 0; i &amp;lt; candidateList.length; i++) {
+      if (candidateList[i] == candidate) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+&lt;/pre&gt;
+
+
+&lt;h3&gt;Pasos para desplegar el contrato&lt;/h3&gt;
+&lt;p&gt;&lt;em&gt;Ejecutar node&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;Mientras se ejecutan los comandos, se puede ver su salida y analizarla.&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;Web3&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;require&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'web3'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="nx"&gt;web3&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;Web3&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt; &lt;span class="nx"&gt;Web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;providers&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;HttpProvider&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"http://localhost:8545"&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;Listar las cuentas existentes en la red&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;eth&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;accounts&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;Compilar el código &lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;code&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;fs&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;readFileSync&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'Voting.sol'&lt;/span&gt;&lt;span class="p"&gt;).&lt;/span&gt;&lt;span class="nx"&gt;toString&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="nx"&gt;solc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;require&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'solc'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="nx"&gt;compiledCode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;solc&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;compile&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;code&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nx"&gt;abiDefinition&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;JSON&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;parse&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;compiledCode&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;contracts&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;':Voting'&lt;/span&gt;&lt;span class="p"&gt;].&lt;/span&gt;&lt;span class="kr"&gt;interface&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="nx"&gt;VotingContract&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;eth&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;contract&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;abiDefinition&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="nx"&gt;byteCode&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;compiledCode&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;contracts&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;':Voting'&lt;/span&gt;&lt;span class="p"&gt;].&lt;/span&gt;&lt;span class="nx"&gt;bytecode&lt;/span&gt;
+&lt;span class="nx"&gt;deployedContract&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;VotingContract&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="k"&gt;new&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="s1"&gt;'Rama'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="s1"&gt;'Nick'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="s1"&gt;'Jose'&lt;/span&gt;&lt;span class="p"&gt;],{&lt;/span&gt;&lt;span class="nx"&gt;data&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;byteCode&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;from&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;eth&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;accounts&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt; &lt;span class="nx"&gt;gas&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;4700000&lt;/span&gt;&lt;span class="p"&gt;})&lt;/span&gt;
+&lt;span class="nx"&gt;deployedContract&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;address&lt;/span&gt;
+&lt;span class="nx"&gt;contractInstance&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nx"&gt;VotingContract&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;at&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nx"&gt;deployedContract&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;address&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="nx"&gt;contractInstance&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;totalVotesFor&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;call&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'Rama'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="p"&gt;{&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="nb"&gt;String&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;'0'&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="nx"&gt;s&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;e&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nx"&gt;c&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt; &lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="p"&gt;}&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="nx"&gt;contractInstance&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;voteForCandidate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'Rama'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="nx"&gt;from&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;eth&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;accounts&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]})&lt;/span&gt;
+
+&lt;span class="s1"&gt;'0xdedc7ae544c3dde74ab5a0b07422c5a51b5240603d31074f5b75c0ebc786bf53'&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="nx"&gt;contractInstance&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;voteForCandidate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'Rama'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="nx"&gt;from&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;eth&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;accounts&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]})&lt;/span&gt;
+
+&lt;span class="s1"&gt;'0x02c054d238038d68b65d55770fabfca592a5cf6590229ab91bbe7cd72da46de9'&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="nx"&gt;contractInstance&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;voteForCandidate&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'Rama'&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="nx"&gt;from&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="nx"&gt;web3&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;eth&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;accounts&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]})&lt;/span&gt;
+
+&lt;span class="s1"&gt;'0x3da069a09577514f2baaa11bc3015a16edf26aad28dffbcd126bde2e71f2b76f'&lt;/span&gt;
+
+&lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="nx"&gt;contractInstance&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;totalVotesFor&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="nx"&gt;call&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'Rama'&lt;/span&gt;&lt;span class="p"&gt;).&lt;/span&gt;&lt;span class="nx"&gt;toLocaleString&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+
+&lt;span class="s1"&gt;'3'&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;h2&gt;Opcodes de la EVM&lt;/h2&gt;
+&lt;h3&gt;0s: Stop and Arithmetic Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x00    STOP        Halts execution
+0x01    ADD         Addition operation
+0x02    MUL         Multiplication operation
+0x03    SUB         Subtraction operation
+0x04    DIV         Integer division operation
+0x05    SDIV        Signed integer
+0x06    MOD         Modulo
+0x07    SMOD        Signed modulo
+0x08    ADDMOD      Modulo
+0x09    MULMOD      Modulo
+0x0a    EXP         Exponential operation
+0x0b    SIGNEXTEND  Extend length of two's complement signed integer
+&lt;/pre&gt;
+
+
+&lt;h3&gt;10s: Comparison &amp;amp; Bitwise Logic Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x10    LT      Lesser-than comparison
+0x11    GT      Greater-than comparison
+0x12    SLT     Signed less-than comparison
+0x13    SGT     Signed greater-than comparison
+0x14    EQ      Equality  comparison
+0x15    ISZERO  Simple not operator
+0x16    AND     Bitwise AND operation
+0x17    OR      Bitwise OR operation
+0x18    XOR     Bitwise XOR operation
+0x19    NOT     Bitwise NOT operation
+0x1a    BYTE    Retrieve single byte from word
+&lt;/pre&gt;
+
+
+&lt;h3&gt;20s: SHA3&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x20    SHA3    Compute Keccak-256 hash
+&lt;/pre&gt;
+
+
+&lt;h3&gt;30s: Environmental Information&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x30    ADDRESS         Get address of currently executing account
+0x31    BALANCE         Get balance of the given account
+0x32    ORIGIN          Get execution origination address
+0x33    CALLER          Get caller address. This is the address of the account that is directly responsible for this execution
+0x34    CALLVALUE       Get deposited value by the instruction/transaction responsible for this execution
+0x35    CALLDATALOAD    Get input data of current environment
+0x36    CALLDATASIZE    Get size of input data in current environment
+0x37    CALLDATACOPY    Copy input data in current environment to memory This pertains to the input data passed with the message call instruction or transaction
+0x38    CODESIZE        Get size of code running in current environment
+0x39    CODECOPY        Copy code running in current environment to memory
+0x3a    GASPRICE        Get price of gas in current environment
+0x3b    EXTCODESIZE     Get size of an account's code
+0x3c    EXTCODECOPY     Copy an account's code to memory
+&lt;/pre&gt;
+
+
+&lt;h3&gt;40s: Block Information&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x40    BLOCKHASH   Get the hash of one of the 256 most recent complete blocks
+0x41    COINBASE    Get the block's beneficiary address
+0x42    TIMESTAMP   Get the block's timestamp
+0x43    NUMBER      Get the block's number
+0x44    DIFFICULTY  Get the block's difficulty
+0x45    GASLIMIT    Get the block's gas limit
+&lt;/pre&gt;
+
+
+&lt;h3&gt;50s Stack, Memory, Storage and Flow Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x50    POP         Remove item from stack
+0x51    MLOAD       Load word from memory
+0x52    MSTORE      Save word to memory
+0x53    MSTORE8     Save byte to memory
+0x54    SLOAD       Load word from storage
+0x55    SSTORE      Save word to storage
+0x56    JUMP        Alter the program counter
+0x57    JUMPI       Conditionally alter the program counter
+0x58    PC          Get the value of the program counter prior to the increment
+0x59    MSIZE       Get the size of active memory in bytes
+0x5a    GAS         Get the amount of available gas, including the corresponding reduction
+0x5b    JUMPDEST    Mark a valid destination for jumps
+&lt;/pre&gt;
+
+
+&lt;h3&gt;60s &amp;amp; 70s: Push Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x60    PUSH1   Place 1 byte item on stack
+0x61    PUSH2   Place 2-byte item on stack
+…
+0x7f    PUSH32  Place 32-byte (full word) item on stack
+&lt;/pre&gt;
+
+
+&lt;h3&gt;80s: Duplication Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x80    DUP1    Duplicate 1st stack item
+0x81    DUP2    Duplicate 2nd stack item
+…
+0x8f    DUP16   Duplicate 16th stack item
+&lt;/pre&gt;
+
+
+&lt;h3&gt;90s: Exchange Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0x90    SWAP1   Exchange 1st and 2nd stack items
+0x91    SWAP2   Exchange 1st and 3rd stack items
+…   …
+0x9f    SWAP16  Exchange 1st and 17th stack items
+&lt;/pre&gt;
+
+
+&lt;h3&gt;a0s: Logging Operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0xa0    LOG0    Append log record with no topics
+0xa1    LOG1    Append log record with one topic
+…   …
+0xa4    LOG4    Append log record with four topics
+&lt;/pre&gt;
+
+
+&lt;h3&gt;f0s: System operations&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0xf0    CREATE          Create a new account with associated code
+0xf1    CALL            Message-call into an account
+0xf2    CALLCODE        Message-call into this account with alternative account's code
+0xf3    RETURN          Halt execution returning output data
+0xf4    DELEGATECALL    Message-call into this account with an alternative account's code, but persisting the current values for `sender` and `value`
+&lt;/pre&gt;
+
+
+&lt;h3&gt;Halt Execution, Mark for deletion&lt;/h3&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;0xff    SELFDESTRUCT    Halt execution and register account for later deletion
+&lt;/pre&gt;
+
+
+&lt;h2&gt;Referencias&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;https://github.com/creationix/nvm&lt;/li&gt;
+&lt;li&gt;https://github.com/ethereumjs/testrpc&lt;/li&gt;
+&lt;li&gt;https://en.wikipedia.org/wiki/Remote_procedure_call&lt;/li&gt;
+&lt;li&gt;http://ethdocs.org/en/latest/network/test-networks.html&lt;/li&gt;
+&lt;li&gt;https://medium.com/@doart3/ethereum-dapps-without-truffle-compile-deploy-use-it-e6daeefcf919&lt;/li&gt;
+&lt;li&gt;https://medium.com/@mvmurthy/full-stack-hello-world-voting-ethereum-dapp-tutorial-part-1-40d2d0d807c2&lt;/li&gt;
+&lt;li&gt;https://github.com/ethereum/yellowpaper&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Notas&lt;/h2&gt;
+&lt;p&gt;testrpc -n5&lt;/p&gt;&lt;/div&gt;</description><guid>http://www.jaquerespeis.org/en/posts/postsholamundo-ethereum/</guid><pubDate>Wed, 19 Jul 2017 11:07:00 GMT</pubDate></item><item><title>An errbot snap for simplified chatops</title><link>http://www.jaquerespeis.org/en/posts/esblogerrbot-snap/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;div&gt;&lt;p&gt;I'm a Quality Assurance Engineer. A big part of my job is to find problems,
+then make sure that they are fixed and &lt;em&gt;automated&lt;/em&gt; so they don't regress. If I
+do my job well, then our process will identify new and potential problems early
+&lt;em&gt;without manual intervention&lt;/em&gt; from anybody in the team. It's like trying to
+automate myself, everyday, until I'm no longer needed and have to jump to
+another project.&lt;/p&gt;
+&lt;p&gt;However, as we work in the project, it's unavoidable that many small manual
+tasks accumulate on my hands. This happens because I set up the continuous
+integration infrastructure, so I'm the one who knows more about it and have
+easier access, or because I'm the one who requested access to the build farm
+so I'm the one with the password, or because I configured the staging
+environment and I'm the only one who knows the details. This is a great way
+to achieve job security, but it doesn't lead us to higher quality. It's a job
+half done, and it's terribly boring to be a bottleneck and a silo of
+information about testing and the release process. All of these tasks should be
+shared by the whole team, as with all the other tasks in the project.&lt;/p&gt;
+&lt;p&gt;There are two problems. First, most of these tasks involve delicate credentials
+that shouldn't be freely shared with everybody. Second, even if the task itself
+is simple and quick to execute, it's not very simple to document how to set up
+the environment to be able to execute them, nor how to make sure that the right
+task is executed in the right moment.&lt;/p&gt;
+&lt;p&gt;Chatops is how I like to solve all of this. The idea is that every task that
+requires manual intervention is implemented in a script that can be executed by
+a bot. This bot joins the communication channel where the entire team is
+present, and it will execute the tasks and report about their results as a
+response to external events that happen somewhere in the project
+infrastructure, or as a response to the direct request of a team member in the
+channel. The credentials are kept safe, they only have to be shared with the
+bot and the permissions can be handled with access control lists or membership
+to the channel. And the operative knowledge is shared with all the team,
+because they are all listening in the same channel with the bot. This means
+that anybody can execute the tasks, and the bot assists them to make it simple.&lt;/p&gt;
+&lt;p&gt;In snapcraft we started writing our bot not so long ago. It's called snappy-m-o
+(&lt;a href="http://pixar.wikia.com/wiki/M-O"&gt;Microbe Obliterator&lt;/a&gt;), and it's written
+in python with &lt;a href="http://errbot.io/"&gt;errbot&lt;/a&gt;. We, of course, packaged it as a
+snap so we have automated delivery every time we change it's source code, and
+the bot is also autoupdated in the server, so in the chat we are always
+interacting with the latest and greatest.&lt;/p&gt;
+&lt;p&gt;Let me show you how we started it, in case you want to get your own. But let's
+call this one Baymax, and let's make a virtual environment with errbot, to
+experiment.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://upload.wikimedia.org/wikipedia/en/2/2c/Baymax_from_Disney%27s_Big_Hero_6.png"&gt;&lt;img alt="drawing of the Baymax bot" src="https://upload.wikimedia.org/wikipedia/en/2/2c/Baymax_from_Disney%27s_Big_Hero_6.png"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;$ mkdir -p ~/workspace/baymax
+$ &lt;span class="nb"&gt;cd&lt;/span&gt; ~/workspace/baymax
+$ sudo apt install python3-venv
+$ python3 -m venv .venv
+$ &lt;span class="nb"&gt;source&lt;/span&gt; .venv/bin/activate
+$ pip install errbot
+$ errbot --init
+&lt;/pre&gt;
+
+
+&lt;p&gt;The last command will initialize this bot with a super simple plugin, and
+will configure it to work in text mode. This means that the bot won't be
+listening on any channel, you can just interact with it through the command
+line (the ops, without the chat). Let's try it:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;$ errbot
+&lt;span class="o"&gt;[&lt;/span&gt;...&lt;span class="o"&gt;]&lt;/span&gt;
+&amp;gt;&amp;gt;&amp;gt; !help
+All commands
+&lt;span class="o"&gt;[&lt;/span&gt;...&lt;span class="o"&gt;]&lt;/span&gt;
+!tryme - Execute to check &lt;span class="k"&gt;if&lt;/span&gt; Errbot responds to command.
+&lt;span class="o"&gt;[&lt;/span&gt;...&lt;span class="o"&gt;]&lt;/span&gt;
+&amp;gt;&amp;gt;&amp;gt; !tryme
+It works !
+&amp;gt;&amp;gt;&amp;gt; !shutdown --confirm
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;code&gt;tryme&lt;/code&gt; is the command provided by the example plugin that &lt;code&gt;errbot --init&lt;/code&gt;
+created. Take a look at the file &lt;code&gt;plugins/err-example/example.py&lt;/code&gt;, errbot is
+just lovely. In order to define your own plugin you will just need a class that
+inherits from &lt;code&gt;errbot.BotPlugin&lt;/code&gt;, and the commands are methods decorated with
+&lt;code&gt;@errbot.botcmd&lt;/code&gt;. I won't dig into how to write plugins, because they have an
+amazing
+&lt;a href="http://errbot.io/en/latest/user_guide/plugin_development/index.html"&gt;documentation about Plugin development&lt;/a&gt;.
+You can also read the plugins we have in our snappy-m-o, one for
+&lt;a href="https://github.com/elopio/snappy-m-o/blob/master/plugins/autopkgtest_github/autopkgtest_github.py"&gt;triggering autopkgtests on GitHub pull requests&lt;/a&gt;,
+and the other for
+&lt;a href="https://github.com/elopio/snappy-m-o/blob/master/plugins/snapcraft_github/snapcraft_github.py"&gt;subscribing to the results of the pull requests tests&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Let's change the config of Baymax to put it in an IRC chat:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;$ pip install irc
+&lt;/pre&gt;
+
+
+&lt;p&gt;And in the &lt;code&gt;config.py&lt;/code&gt; file, set the following values:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;BACKEND = 'IRC'
+BOT_IDENTITY = {
+    'nickname' : 'baymax-elopio',  # Nicknames need to be unique, so append your own.
+                                   # Remember to replace 'elopio' with your nick everywhere
+                                   # from now on.
+    'server' : 'irc.freenode.net',
+}
+CHATROOM_PRESENCE = ('#snappy',)
+&lt;/pre&gt;
+
+
+&lt;p&gt;Run it again with the errbot command, but this time join the #snappy channel
+in irc.freenode.net, and write in there &lt;code&gt;!tryme&lt;/code&gt;. It works ! :)&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://archive.org/download/elopio-screenshots2/errbot/errbot-snap.png"&gt;&lt;img alt="screenshot of errbot on IRC" src="https://archive.org/download/elopio-screenshots2/errbot/errbot-snap.png"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;So, this is very simple, but let's package it now to start with the good
+practice of continuous delivery before it gets more complicated. As usual, it
+just requires a &lt;code&gt;snapcraft.yaml&lt;/code&gt; file with all the packaging info and metadata:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;baymax&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;elopio&lt;/span&gt;
+&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s1"&gt;'0.1-dev'&lt;/span&gt;
+&lt;span class="n"&gt;summary&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="n"&gt;test&lt;/span&gt; &lt;span class="n"&gt;bot&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;errbot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
+&lt;span class="n"&gt;description&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;Chat&lt;/span&gt; &lt;span class="n"&gt;ops&lt;/span&gt; &lt;span class="n"&gt;bot&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;my&lt;/span&gt; &lt;span class="n"&gt;team&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
+&lt;span class="n"&gt;grade&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;stable&lt;/span&gt;
+&lt;span class="n"&gt;confinement&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;strict&lt;/span&gt;
+
+&lt;span class="n"&gt;apps&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;baymax&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;elopio&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;command&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;env&lt;/span&gt; &lt;span class="n"&gt;LC_ALL&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;UTF&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mi"&gt;8&lt;/span&gt; &lt;span class="n"&gt;errbot&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="n"&gt;$SNAP&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;py&lt;/span&gt;
+    &lt;span class="n"&gt;plugs&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;home&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;network&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;network&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;bind&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+
+&lt;span class="n"&gt;parts&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;errbot&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;plugin&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;python&lt;/span&gt;
+    &lt;span class="n"&gt;python&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;errbot&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;irc&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+  &lt;span class="n"&gt;baymax&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;source&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt;
+    &lt;span class="n"&gt;plugin&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;dump&lt;/span&gt;
+    &lt;span class="n"&gt;stage&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+      &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;py&lt;/span&gt;
+      &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;plugins&lt;/span&gt;
+    &lt;span class="n"&gt;after&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;errbot&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;And we need to change a few more values in &lt;code&gt;config.py&lt;/code&gt; to make sure that the
+bot is relocatable, that we can run it in the isolated snap environment, and
+that we can add plugins after it has been installed:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;os&lt;/span&gt;
+
+&lt;span class="n"&gt;BOT_DATA_DIR&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;environ&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'SNAP_USER_DATA'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;BOT_EXTRA_PLUGIN_DIR&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;path&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;join&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;os&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;environ&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;'SNAP'&lt;/span&gt;&lt;span class="p"&gt;),&lt;/span&gt; &lt;span class="s1"&gt;'plugins'&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;BOT_LOG_FILE&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;BOT_DATA_DIR&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;'/err.log'&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;One final try, this time from the snap:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;$ sudo apt install snapcraft
+$ snapcraft
+$ sudo snap install baymax*.snap --dangerous
+$ baymax-elopio
+&lt;/pre&gt;
+
+
+&lt;p&gt;And go back to IRC to check.&lt;/p&gt;
+&lt;p&gt;Last thing would be to push the source code we have just written to a GitHub
+repo, and enable the continuous delivery in build.snapcraft.io. Go to your
+server and install the bot with &lt;code&gt;sudo snap install baymax-elopio --edge&lt;/code&gt;.
+Now everytime somebody from your team makes a change in the master repo in
+GitHub, the bot in your server will be automatically updated to get those
+changes within a few hours without any work from your side.&lt;/p&gt;
+&lt;p&gt;If you are into chatops, make sure that every time you do a manual task, you
+also plan for some time to turn that task into a script that can be executed
+by your bot. And get ready to enjoy tons and tons of free time, or just keep
+going through those &lt;a href="https://bugs.launchpad.net/snapcraft"&gt;400 open bugs&lt;/a&gt;,
+whichever you prefer :)&lt;/p&gt;&lt;/div&gt;</description><guid>http://www.jaquerespeis.org/en/posts/esblogerrbot-snap/</guid><pubDate>Wed, 12 Jul 2017 10:07:00 GMT</pubDate></item><item><title>Deploy to all SBCs with Gobot and a single snap package</title><link>http://www.jaquerespeis.org/en/posts/esbloggobot-snaps/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;div&gt;&lt;p&gt;I love playing with my prototyping boards. Here at Ubuntu we are designing
+the &lt;a href="https://developer.ubuntu.com/core/get-started"&gt;core operating system&lt;/a&gt;
+to support every &lt;a href="https://en.wikipedia.org/wiki/Single-board_computer"&gt;single-board computer&lt;/a&gt;,
+and keep it safe, updated and simple. I've learned a lot about physical
+computing, but I always have a big problem when my prototype is done, and I
+want to deploy it. I am working with a
+&lt;a href="https://en.wikipedia.org/wiki/Raspberry_Pi"&gt;Raspberry Pi&lt;/a&gt;, a
+&lt;a href="http://www.96boards.org/product/dragonboard410c/"&gt;DragonBoard&lt;/a&gt;, and a
+&lt;a href="https://en.wikipedia.org/wiki/BeagleBoard#BeagleBone_Black"&gt;BeagleBone&lt;/a&gt;. They
+are all very different, with different architectures, different pins, onboard
+capabilities and peripherals, and they can have different operating systems.
+When I started learning about this, I had to write 3 programs that were very
+different, if I wanted to try my prototype in all my boards.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://archive.org/download/snappy-gobot/20170710_174806.jpg"&gt;&lt;img alt="picture of the three different SBCs" src="https://archive.org/download/snappy-gobot/20170710_174806.jpg"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Then I found &lt;a href="https://gobot.io/"&gt;Gobot&lt;/a&gt;, a framework for robotics and IoT that
+supports my three boards, and many more. With the added benefit that you can
+write all the software in the lovely and clean Go language. The Ubuntu store
+supports all their architectures too, and
+&lt;a href="https://www.youtube.com/watch?v=b2x6mumSrpw"&gt;packaging Go projects with snapcraft&lt;/a&gt;
+is super simple. So we can combine all of this to make a single snap package
+that with the help of Gobot will work on every board, and deploy it to all the
+users of these boards through the snaps store.&lt;/p&gt;
+&lt;p&gt;Let's dig into the code with a very simple example to blink an LED, first
+for the Raspberry PI only.&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;package&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+  &lt;span class="s2"&gt;"time"&lt;/span&gt;
+
+  &lt;span class="s2"&gt;"gobot.io/x/gobot"&lt;/span&gt;
+  &lt;span class="s2"&gt;"gobot.io/x/gobot/drivers/gpio"&lt;/span&gt;
+  &lt;span class="s2"&gt;"gobot.io/x/gobot/platforms/raspi"&lt;/span&gt;
+&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;func&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+  &lt;span class="n"&gt;adaptor&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;raspi&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewAdaptor&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+  &lt;span class="n"&gt;led&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;gpio&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewLedDriver&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;adaptor&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;"7"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+  &lt;span class="n"&gt;work&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;func&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Every&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Second&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;func&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+      &lt;span class="n"&gt;led&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Toggle&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="p"&gt;})&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+
+  &lt;span class="n"&gt;robot&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewRobot&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"snapbot"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Connection&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;adaptor&lt;/span&gt;&lt;span class="p"&gt;},&lt;/span&gt;
+    &lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Device&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;led&lt;/span&gt;&lt;span class="p"&gt;},&lt;/span&gt;
+    &lt;span class="n"&gt;work&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+  &lt;span class="p"&gt;)&lt;/span&gt;
+
+  &lt;span class="n"&gt;robot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Start&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;In there you will see some of the Gobot concepts. There's an adaptor for the
+board, a driver for the specific device (in this case the LED), and a robot
+to control everything. In this program, there are only two things specific to
+the Raspberry Pi: the adaptor and the name of the GPIO pin (&lt;code&gt;"7"&lt;/code&gt;).&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://ia801502.us.archive.org/32/items/snappy-gobot/20170710_214428.ogv"&gt;&lt;img alt="picture of the Raspberry Pi prototype" src="https://ia601502.us.archive.org/32/items/snappy-gobot/20170710_214439.jpg"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;It works nicely in one of the boards, but let's extend the code a little to
+support the other two.&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;package&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+  &lt;span class="s2"&gt;"log"&lt;/span&gt;
+  &lt;span class="s2"&gt;"os/exec"&lt;/span&gt;
+  &lt;span class="s2"&gt;"strings"&lt;/span&gt;
+  &lt;span class="s2"&gt;"time"&lt;/span&gt;
+
+  &lt;span class="s2"&gt;"gobot.io/x/gobot"&lt;/span&gt;
+  &lt;span class="s2"&gt;"gobot.io/x/gobot/drivers/gpio"&lt;/span&gt;
+  &lt;span class="s2"&gt;"gobot.io/x/gobot/platforms/beaglebone"&lt;/span&gt;
+  &lt;span class="s2"&gt;"gobot.io/x/gobot/platforms/dragonboard"&lt;/span&gt;
+  &lt;span class="s2"&gt;"gobot.io/x/gobot/platforms/raspi"&lt;/span&gt;
+&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="n"&gt;func&lt;/span&gt; &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+  &lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;err&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="k"&gt;exec&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Command&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"uname"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;"-r"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Output&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+  &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;err&lt;/span&gt; &lt;span class="o"&gt;!=&lt;/span&gt; &lt;span class="n"&gt;nil&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Fatal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;err&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+  &lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;adaptor&lt;/span&gt; &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Adaptor&lt;/span&gt;
+  &lt;span class="n"&gt;var&lt;/span&gt; &lt;span class="n"&gt;pin&lt;/span&gt; &lt;span class="n"&gt;string&lt;/span&gt;
+  &lt;span class="n"&gt;kernelRelease&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;out&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;strings&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Contains&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;kernelRelease&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;"raspi2"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;adaptor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;raspi&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewAdaptor&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="n"&gt;pin&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;"7"&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;strings&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Contains&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;kernelRelease&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s2"&gt;"snapdragon"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;adaptor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;dragonboard&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewAdaptor&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="n"&gt;pin&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;"GPIO_A"&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="k"&gt;else&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;adaptor&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;beaglebone&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewAdaptor&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="n"&gt;pin&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;"P8_7"&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+  &lt;span class="n"&gt;digitalWriter&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;ok&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;adaptor&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;gpio&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;DigitalWriter&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="err"&gt;!&lt;/span&gt;&lt;span class="n"&gt;ok&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;log&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Fatal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"Invalid adaptor"&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+  &lt;span class="n"&gt;led&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;gpio&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewLedDriver&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;digitalWriter&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;pin&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+  &lt;span class="n"&gt;work&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;func&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Every&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Second&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;func&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+      &lt;span class="n"&gt;led&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Toggle&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="p"&gt;})&lt;/span&gt;
+  &lt;span class="p"&gt;}&lt;/span&gt;
+
+  &lt;span class="n"&gt;robot&lt;/span&gt; &lt;span class="p"&gt;:&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;NewRobot&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;"snapbot"&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Connection&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;adaptor&lt;/span&gt;&lt;span class="p"&gt;},&lt;/span&gt;
+    &lt;span class="p"&gt;[]&lt;/span&gt;&lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Device&lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="n"&gt;led&lt;/span&gt;&lt;span class="p"&gt;},&lt;/span&gt;
+    &lt;span class="n"&gt;work&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+  &lt;span class="p"&gt;)&lt;/span&gt;
+
+  &lt;span class="n"&gt;robot&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Start&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;We are basically adding in there a block to select the right adaptor and pin,
+depending on which board the code is running. Now we can compile this program,
+throw the binary in the board, and give it a try.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://ia801502.us.archive.org/32/items/snappy-gobot/20170710_212605.ogv"&gt;&lt;img alt="picture of the Dragonboard prototype" src="https://ia801502.us.archive.org/32/items/snappy-gobot/20170710_212602.jpg"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;But we can do better. If we package this in a snap, anybody with one of the
+boards and an operating system that supports snaps can easily install it. We
+also open the door to
+&lt;a href="https://build.snapcraft.io"&gt;continuous delivery&lt;/a&gt; and
+&lt;a href="http://elopio.net/blog/ipfs-crowdtesting/"&gt;crowd testing&lt;/a&gt;. And as I said
+before, super simple, just put this in the &lt;code&gt;snapcraft.yaml&lt;/code&gt; file:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;blink&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;elopio&lt;/span&gt;
+&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;master&lt;/span&gt;
+&lt;span class="n"&gt;summary&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;  &lt;span class="n"&gt;Blink&lt;/span&gt; &lt;span class="n"&gt;snap&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;Raspberry&lt;/span&gt; &lt;span class="n"&gt;Pi&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;Gobot&lt;/span&gt;
+&lt;span class="n"&gt;description&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt;
+  &lt;span class="n"&gt;This&lt;/span&gt; &lt;span class="k"&gt;is&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="n"&gt;simple&lt;/span&gt; &lt;span class="n"&gt;example&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;blink&lt;/span&gt; &lt;span class="n"&gt;an&lt;/span&gt; &lt;span class="n"&gt;LED&lt;/span&gt; &lt;span class="k"&gt;in&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;Raspberry&lt;/span&gt; &lt;span class="n"&gt;Pi&lt;/span&gt;
+  &lt;span class="n"&gt;using&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;Gobot&lt;/span&gt; &lt;span class="n"&gt;framework&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
+
+&lt;span class="n"&gt;confinement&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;devmode&lt;/span&gt;
+
+&lt;span class="n"&gt;apps&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;blink&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;elopio&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;command&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;blink&lt;/span&gt;
+
+&lt;span class="n"&gt;parts&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;gobot&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;blink&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;source&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt;
+    &lt;span class="n"&gt;plugin&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;go&lt;/span&gt;
+    &lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;importpath&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;github&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;com&lt;/span&gt;&lt;span class="sr"&gt;/elopio/g&lt;/span&gt;&lt;span class="n"&gt;obot&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;blink&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;To build the snap, here is a cool trick thanks to the work that
+&lt;a href="http://www.twotoasts.de/index.php/2017/06/how-to-support-cross-compilation-in-plugins/"&gt;kalikiana&lt;/a&gt;
+recently added to snapcraft. I'm writing this code in my development machine,
+which is amd64. But the raspberry pi and beaglebone are armhf, and the
+dragonboard is arm64; so I need to cross-compile the code to get binaries
+for all the architectures:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;snapcraft --target-arch=armhf
+snapcraft clean
+snapcraft --target-arch=arm64
+&lt;/pre&gt;
+
+
+&lt;p&gt;That will leave two .snap files in my working directory that then I can upload
+to the store with &lt;code&gt;snapcraft push&lt;/code&gt;. Or I can just push the code to GitHub and
+let &lt;a href="https://build.snapcraft.io"&gt;build.snapcraft.io&lt;/a&gt; to take care of building
+and pushing for me.&lt;/p&gt;
+&lt;p&gt;Here is the source code for this simple example:
+&lt;a href="https://github.com/elopio/gobot-blink"&gt;https://github.com/elopio/gobot-blink&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Of course, Gobot supports many more devices that will let you build complex
+robots. Just take a look at the
+&lt;a href="https://gobot.io/documentation/"&gt;documentation in the Gobot site&lt;/a&gt;, and at the
+&lt;a href="https://gobot.io/documentation/guides/snapcraft/"&gt;guide about deployable packages with Gobot and snapcraft&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://ia801502.us.archive.org/32/items/snappy-gobot/20170710_233319.ogv"&gt;&lt;img alt="picture of the BeagleBone prototype" src="https://ia601502.us.archive.org/32/items/snappy-gobot/20170710_233317.jpg"&gt;&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;If you have one of the boards I'm using here to play, give it a try:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;sudo snap install gobot-blink-elopio --edge --devmode
+sudo gobot-blink-elopio
+&lt;/pre&gt;
+
+
+&lt;p&gt;Now my experiments will be to try make the snap more secure, with strict
+confinement. If you have any questions or want to help, we have a
+&lt;a href="https://forum.snapcraft.io/t/write-your-robots-in-go-with-gobot-and-distribute-the-software-as-snaps/1086"&gt;topic in the forum&lt;/a&gt;.&lt;/p&gt;&lt;/div&gt;</description><guid>http://www.jaquerespeis.org/en/posts/esbloggobot-snaps/</guid><pubDate>Tue, 11 Jul 2017 20:07:00 GMT</pubDate></item><item><title>#Maperespeis - Costa Rica</title><link>http://www.jaquerespeis.org/en/posts/michijonesmaperespeis-costa-rica-55e4da8530cc/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;figure&gt;&lt;img alt="" src="https://cdn-images-1.medium.com/max/301/1*f2VCzmQoUTxvN7xGk4Xvqg.png"&gt;&lt;/figure&gt;&lt;p&gt;Desde hace 2 años, que me uní al Jaquerespeis, tuve la oportunidad de aprender acerca de mapas abiertos, &lt;a href="http://openstreetmap.org"&gt;OpenStreetMaps&lt;/a&gt; y &lt;a href="https://www.mapillary.com/"&gt;Mapillary&lt;/a&gt;. Uno de las fortalezas del &lt;a href="http://jaquerespeis.org/"&gt;Jaquerespeis&lt;/a&gt; es el hecho de que es un grupo con un gran interés por los datos abiertos, información libre y que tiene mucha pasión por los proyectos que realizan. Otra fortaleza es el hecho de que &lt;a href="https://twitter.com/yoelopio/status/850866539821662208"&gt;Leo Arias &lt;/a&gt;(el embajador de Mapillary de Costa Rica) moviliza mucho las actividades y gracias a su contacto con Mapillary hemos conseguido productos para ayudar el mapeo del país. Un ejemplo de esto es la cámara 360.&lt;/p&gt;&lt;p&gt;El #Maperespeis es una oportunidad para reunirnos con mayor frecuencia, de realizar actividades, analizar los datos que se recolectaron , hacer un análisis de los mapas abiertos que existen y crear planes de trabajo para mejorar el estado en el cual se encuentran.&lt;/p&gt;&lt;p&gt;Descripción de los programas\herramientas que se utilizan:&lt;/p&gt;&lt;p&gt;Mapillary: Es una aplicación celular y web que permite recrear el entorno en 360 grados. Esta aplicación usa como base el OpenStreetMap, es gratis y se puede mapear en una gran variedad de celulares. Como a las grandes empresas no les interesa un mapeo de paises más pequeños, esta aplicación es una oportunidad que se puede aprovechar en cualquier país.&lt;/p&gt;&lt;p&gt;OpenStreetMap: Este es un programa de mapas libre que se lanzo a la web en el 2004. Este mapa es creado por voluntarios que colaboran para documentar el espacio donde se encuentran. Una ventaja muy grande de este mapa es que se puede descargar la base del mapa a un Sistema de Informacion Geográfico. Algunas iniciativas que trabajan con esto son: &lt;a href="http://mapanica.net/"&gt;MapaNica&lt;/a&gt;, &lt;a href="http://si.cultura.cr/"&gt;SiCultura &lt;/a&gt;(Costa Rica), &lt;a href="http://tasks.hotosm.org/"&gt;OSMTasking Manager&lt;/a&gt;&lt;/p&gt;&lt;p&gt;Cámara 360 : Este tipo de camara permite grabar en 360 con cada imagen que guarda. Generalmente tiene dos lentes con gran alcance hacia las periferias. Estas imágenes luego se pueden subir a Mapillary.&lt;/p&gt;&lt;p&gt;Las reuniones se realizan de manera esporádica. Todo se notifica por el Facebook.&lt;/p&gt;&lt;p&gt;Vamos a mapear!!&lt;/p&gt;&lt;img src="https://medium.com/_/stat?event=post.clientViewed&amp;amp;referrerSource=full_rss&amp;amp;postId=55e4da8530cc" width="1" height="1"&gt;</description><guid>http://www.jaquerespeis.org/en/posts/michijonesmaperespeis-costa-rica-55e4da8530cc/</guid><pubDate>Tue, 04 Jul 2017 20:07:40 GMT</pubDate></item><item><title>User acceptance testing of snaps, with Travis</title><link>http://www.jaquerespeis.org/en/posts/esblogtravis-snap-testing/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;div&gt;&lt;p&gt;&lt;a href="https://travis-ci.org/"&gt;Travis CI&lt;/a&gt; offers a great continuous integration
+service for the projects hosted on GitHub. With it, you can run tests, deliver
+artifacts and deploy applications every time you push a commit, on pull requests, after they are merged, or with some other frequency.&lt;/p&gt;
+&lt;p&gt;Last week Travis CI
+&lt;a href="https://blog.travis-ci.com/2017-06-21-trusty-updates-2017-Q2-launch"&gt;updated the Ubuntu 14.04 (Trusty) machines&lt;/a&gt;
+that run your tests and deployment steps. This update came with a nice surprise for everybody
+working to deliver software to Linux users, because it is now possible to
+install &lt;a href="https://snapcraft.io"&gt;snaps&lt;/a&gt; in Travis!&lt;/p&gt;
+&lt;p&gt;I've been excited all week telling people about all the doors that this opens;
+but if you have been following my adventures in the Ubuntu world, by now you
+can probably guess that I'm mostly thinking about all the potential this has
+for automated testing. For the automation of user acceptance tests.&lt;/p&gt;
+&lt;p&gt;User acceptance tests are executed from the point of view of the user, with
+your software presented as a black box to them. The tests can only interact
+with the software through the entry points you define for your users. If it's
+a CLI application, then the tests will call commands and subcommands and check
+the outputs. If it's a website or a desktop application, the tests will click
+things, enter text and check the changes on this GUI. If it's a service with
+an HTTP API, the tests will make requests and check the responses. On these
+tests, the closer you can get to simulate the environment and behaviour of your
+real users, the better.&lt;/p&gt;
+&lt;p&gt;Snaps are great for the automation of user acceptance tests because they are
+immutable and they bundle all their dependencies. With this we can make sure
+that your snap will work the same on any of the operating systems and
+architectures that support snaps. The &lt;a href="https://snapcraft.io/docs/core/snapd"&gt;snapd&lt;/a&gt; service takes care of hiding
+the differences and presenting a consistent execution environment for the snap.
+So, getting a green execution of these tests in the Trusty machine of Travis is
+a pretty good indication that it will work on all the active releases of
+Ubuntu, Debian, Fedora and even on a Raspberry Pi.&lt;/p&gt;
+&lt;p&gt;Let me show you an example of what I'm talking about, obviously using my
+favourite snap called IPFS. There is
+&lt;a href="http://elopio.net/blog/ipfs-crowdtesting/"&gt;more information about IPFS in my previous post&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Check below the packaging metadata for the IPFS snap, a single &lt;code&gt;snapcraft.yaml&lt;/code&gt;
+file:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;name&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ipfs&lt;/span&gt;
+&lt;span class="n"&gt;version&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;master&lt;/span&gt;
+&lt;span class="n"&gt;summary&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;global&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;versioned&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;peer&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;to&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;peer&lt;/span&gt; &lt;span class="n"&gt;filesystem&lt;/span&gt;
+&lt;span class="n"&gt;description&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt;
+  &lt;span class="n"&gt;IPFS&lt;/span&gt; &lt;span class="n"&gt;combines&lt;/span&gt; &lt;span class="n"&gt;good&lt;/span&gt; &lt;span class="n"&gt;ideas&lt;/span&gt; &lt;span class="n"&gt;from&lt;/span&gt; &lt;span class="n"&gt;Git&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;BitTorrent&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;Kademlia&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;SFS&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;and&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;Web&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
+  &lt;span class="n"&gt;It&lt;/span&gt; &lt;span class="k"&gt;is&lt;/span&gt; &lt;span class="n"&gt;like&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="n"&gt;single&lt;/span&gt; &lt;span class="n"&gt;bittorrent&lt;/span&gt; &lt;span class="n"&gt;swarm&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;exchanging&lt;/span&gt; &lt;span class="n"&gt;git&lt;/span&gt; &lt;span class="n"&gt;objects&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;IPFS&lt;/span&gt; &lt;span class="n"&gt;provides&lt;/span&gt;
+  &lt;span class="n"&gt;an&lt;/span&gt; &lt;span class="kd"&gt;interface&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;simple&lt;/span&gt; &lt;span class="k"&gt;as&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;HTTP&lt;/span&gt; &lt;span class="n"&gt;web&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;but&lt;/span&gt; &lt;span class="k"&gt;with&lt;/span&gt; &lt;span class="n"&gt;permanence&lt;/span&gt; &lt;span class="n"&gt;built&lt;/span&gt; &lt;span class="k"&gt;in&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="n"&gt;You&lt;/span&gt;
+  &lt;span class="n"&gt;can&lt;/span&gt; &lt;span class="n"&gt;also&lt;/span&gt; &lt;span class="n"&gt;mount&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;world&lt;/span&gt; &lt;span class="n"&gt;at&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;ipfs&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;
+&lt;span class="n"&gt;confinement&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;strict&lt;/span&gt;
+
+&lt;span class="n"&gt;apps&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;ipfs&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;command&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;ipfs&lt;/span&gt;
+    &lt;span class="n"&gt;plugs&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;home&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;network&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;network&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;bind&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+
+&lt;span class="n"&gt;parts&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="n"&gt;ipfs&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;source&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;https&lt;/span&gt;&lt;span class="o"&gt;://&lt;/span&gt;&lt;span class="n"&gt;github&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;com&lt;/span&gt;&lt;span class="sr"&gt;/ipfs/g&lt;/span&gt;&lt;span class="n"&gt;o&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;ipfs&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="na"&gt;git&lt;/span&gt;
+    &lt;span class="n"&gt;plugin&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;nil&lt;/span&gt;
+    &lt;span class="n"&gt;build&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;packages&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;make&lt;/span&gt;&lt;span class="o"&gt;,&lt;/span&gt; &lt;span class="n"&gt;wget&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+    &lt;span class="n"&gt;prepare&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt;
+      &lt;span class="n"&gt;mkdir&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt; &lt;span class="o"&gt;../&lt;/span&gt;&lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="sr"&gt;/src/github.com/ipfs/g&lt;/span&gt;&lt;span class="n"&gt;o&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;ipfs&lt;/span&gt;
+      &lt;span class="n"&gt;cp&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;R&lt;/span&gt; &lt;span class="o"&gt;.&lt;/span&gt; &lt;span class="o"&gt;../&lt;/span&gt;&lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="sr"&gt;/src/github.com/ipfs/g&lt;/span&gt;&lt;span class="n"&gt;o&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;ipfs&lt;/span&gt;
+    &lt;span class="n"&gt;build&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt;
+      &lt;span class="n"&gt;env&lt;/span&gt; &lt;span class="n"&gt;GOPATH&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;$&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;pwd&lt;/span&gt;&lt;span class="o"&gt;)/../&lt;/span&gt;&lt;span class="n"&gt;go&lt;/span&gt; &lt;span class="n"&gt;make&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;C&lt;/span&gt; &lt;span class="o"&gt;../&lt;/span&gt;&lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="sr"&gt;/src/github.com/ipfs/g&lt;/span&gt;&lt;span class="n"&gt;o&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;ipfs&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt;
+    &lt;span class="n"&gt;install&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt;
+      &lt;span class="n"&gt;mkdir&lt;/span&gt; &lt;span class="n"&gt;$SNAPCRAFT_PART_INSTALL&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;bin&lt;/span&gt;
+      &lt;span class="n"&gt;mv&lt;/span&gt; &lt;span class="o"&gt;../&lt;/span&gt;&lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="sr"&gt;/bin/ipfs $SNAPCRAFT_PART_INSTALL/bin/&lt;/span&gt;
+    &lt;span class="n"&gt;after&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+  &lt;span class="n"&gt;go&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;source&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;tag&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;go1&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="mf"&gt;7.5&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;It's not the most simple snap because they use their own build tool to get the
+go dependencies and compile; but it's also not too complex. If you are new to
+snaps and want to understand every detail of this file, or you want to package
+your own project, the
+&lt;a href="https://tutorials.ubuntu.com/tutorial/create-first-snap"&gt;tutorial to create your first snap&lt;/a&gt;
+is a good place to start.&lt;/p&gt;
+&lt;p&gt;What's important here is that if you run &lt;code&gt;snapcraft&lt;/code&gt; using the snapcraft.yaml file above, you
+will get the IPFS snap. If you install that snap, then you can test it from the
+point of view of the user. And if the tests work well, you can push it to the
+edge channel of the Ubuntu store to start the crowdtesting with your community.&lt;/p&gt;
+&lt;p&gt;We can automate all of this with Travis. The &lt;code&gt;snapcraft.yaml&lt;/code&gt; for the project
+must be already in the GitHub repository, and we will add there a &lt;code&gt;.travis.yml&lt;/code&gt;
+file. They have
+&lt;a href="https://docs.travis-ci.com/"&gt;good docs to prepare your Travis account&lt;/a&gt;.
+First, let's see what's required to build the snap:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;sudo&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;required&lt;/span&gt;
+&lt;span class="n"&gt;services&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt;&lt;span class="n"&gt;docker&lt;/span&gt;&lt;span class="o"&gt;]&lt;/span&gt;
+
+&lt;span class="n"&gt;script&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;
+  &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;docker&lt;/span&gt; &lt;span class="n"&gt;run&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;v&lt;/span&gt; &lt;span class="n"&gt;$&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;pwd&lt;/span&gt;&lt;span class="o"&gt;):&lt;/span&gt;&lt;span class="n"&gt;$&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;pwd&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;w&lt;/span&gt; &lt;span class="n"&gt;$&lt;/span&gt;&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="n"&gt;pwd&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt; &lt;span class="n"&gt;snapcore&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;snapcraft&lt;/span&gt; &lt;span class="n"&gt;sh&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;c&lt;/span&gt; &lt;span class="s2"&gt;"apt update &amp;amp;&amp;amp; snapcraft"&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;For now, we build the snap in a docker container to keep things simple. We have
+work in progress to be able to install snapcraft in Trusty as a snap, so soon
+this will be even nicer running everything directly in the Travis machine.&lt;/p&gt;
+&lt;p&gt;This previous step will leave the packaged .snap file in the current directory.
+So we can install it adding a few more steps to the Travis script:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;[...]&lt;/span&gt;
+
+&lt;span class="na"&gt;script:&lt;/span&gt;
+  &lt;span class="na"&gt;- docker [...]&lt;/span&gt;
+  &lt;span class="na"&gt;- sudo apt install --yes snapd&lt;/span&gt;
+  &lt;span class="na"&gt;- sudo snap install *.snap --dangerous&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;And once the snap is installed, we can run it and check that it works as expected.
+Those checks are our automated user acceptance test. IPFS has a CLI
+client, so we can just run commands and verify outputs with grep. Or we can get
+fancier using &lt;a href="https://github.com/kward/shunit2"&gt;shunit2&lt;/a&gt; or
+&lt;a href="https://github.com/sstephenson/bats/"&gt;bats&lt;/a&gt;. But the basic idea would be to
+add to the Travis script something like this:&lt;/p&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;[...]&lt;/span&gt;
+
+&lt;span class="na"&gt;script:&lt;/span&gt;
+  &lt;span class="k"&gt;[...]&lt;/span&gt;
+  &lt;span class="na"&gt;- /snap/bin/ipfs init&lt;/span&gt;
+  &lt;span class="na"&gt;- /snap/bin/ipfs cat /ipfs/QmVLDAhCY3X9P2uRudKAryuQFPM5zqA3Yij1dY8FpGbL7T/readme | grep -z "^Hello and Welcome to IPFS!.*$"&lt;/span&gt;
+  &lt;span class="na"&gt;- [...]&lt;/span&gt;
+&lt;/pre&gt;
+
+
+&lt;p&gt;If one of those checks fail, Travis will mark the execution as failed and stop
+our release process until we fix them. If instead, all of the checks pass, then this version
+is good enough to put into the store, where people can take it and run
+exploratory tests to try to find problems caused by weird scenarios that we
+missed in the automation. To help with that we have the
+&lt;code&gt;snapcraft enable-ci travis&lt;/code&gt; command, and a tutorial to guide you
+step by step
+&lt;a href="https://tutorials.ubuntu.com/tutorial/continuous-snap-delivery-from-travis-ci#0"&gt;setting up the continuous delivery from Travis CI&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;For the IPFS snap we had for a long time a manual smoke suite, that our amazing
+&lt;a href="https://forum.snapcraft.io/t/call-for-testing-ipfs/97"&gt;community of testers&lt;/a&gt;
+have been executing over and over again, every time we want to publish a new
+release. I've turned it into
+&lt;a href="https://github.com/elopio/ipfs-snap/blob/master/tests/smoke_test.sh"&gt;a simple bash script&lt;/a&gt;
+that from now on will be executed frequently by Travis, and will tell us if
+there's something wrong before anybody gives it a try manually. With this our
+community of testers will have more time to run new and interesting scenarios,
+trying to break the application in clever ways, instead of running the same
+repetitive steps many times.&lt;/p&gt;
+&lt;p&gt;Thanks to Travis and snapcraft we no longer have to worry about a big part of
+or release process. Continuous integration and delivery can be fully automated,
+and we will have to take a look only when something breaks.&lt;/p&gt;
+&lt;p&gt;As for IPFS, it will keep being my guinea pig to guide new features for
+snapcraft and showcase them when ready. It has many more commands that
+have to be added to the automated test suite, and it also has a web UI and
+an HTTP API. Lots of things to play with! If you would like to help, and
+on the way learn about snaps, automation and the decentralized web, please
+let me know. You can take a look on my
+&lt;a href="https://github.com/elopio/ipfs-snap"&gt;IPFS snap repo&lt;/a&gt; for more details about
+testing snaps in Travis, and other tricks for the build and deployment.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://archive.org/download/elopio-screenshots2/travis/ipsf-travis.png"&gt;&lt;img alt="screenshot of the IPFS smoke test running in travis" src="https://archive.org/download/elopio-screenshots2/travis/ipsf-travis.png"&gt;&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><guid>http://www.jaquerespeis.org/en/posts/esblogtravis-snap-testing/</guid><pubDate>Thu, 29 Jun 2017 09:06:00 GMT</pubDate></item><item><title>#maperespeis6</title><link>http://www.jaquerespeis.org/en/posts/michijonesmaperespeis6-ddfd8062b727/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;p&gt;El 17 de junio del 2017, nos reunimos en el restaurante Manos en la Masa. Si no lo conocen lo recomiendo, comida rica, un espacio amplio para trabajar, internet rápido y un grupo de profesionales que atiende super atenta.&lt;/p&gt;&lt;p&gt;El propósito de esta reunión fue el de organizar la información recolectada en sesiones anteriores de Mapillary, llevadas a cabo en diferentes puntos del país. Estas actividades fueron desarrolladas por integrantes del Jaquerespeis y posteriormente, y de manera específica, por personas pertenecientes al Maperespeis.&lt;/p&gt;&lt;p&gt;Las actividades que recordamos haber realizado, hasta la fecha, y que trabajamos en ese día son las siguientes:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Mapeo del parque la LibertadBares de Heredia&lt;/li&gt;&lt;li&gt;Bares de San José&lt;/li&gt;&lt;li&gt;Volcán Poás&lt;/li&gt;&lt;li&gt;Coronado&lt;/li&gt;&lt;li&gt;Bosque del niño&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Las acciones que se realizaron fueron: la revisión de las imágenes para agregar datos concretos que se ven en las imágenes pero que no salen en OpenStreetMap, la corrección de caminos en bosque y la digitalización de aspectos que aparecen en las imágenes aéreas y satelitales que no salen en OpenStreetMap.&lt;/p&gt;&lt;p&gt;De todas las tareas propuestas, se logró actualizar los mapas según los datos que se recolectaron en las sesiones de campo con el Mapillary. Algunas de las conversaciones de grupo, llevaron a analizar diferentes factores organizativos con el fin de mejorar el espacio en el cual trabajamos, como por ejemplo, celebrar reuniones periódicamente y de manera regular con el fin de asegurar que la información no se olvide; establecer cuál es el mejor medio para convocar a actividades (redes sociales o Telegram); y/o mejorar la sistematización del trabajo que se va desarrollando.&lt;/p&gt;&lt;p&gt;En total, logramos actualizar todos los datos de las salidas anteriores. En relación con el change set #maperespeis6 hay más de 805 cambios asociados.&lt;/p&gt;&lt;p&gt;Enlaces Útiles:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Maperespeis &lt;a href="https://www.facebook.com/maperespeis/?ref=br_rs"&gt;Facebook&lt;/a&gt; Github&lt;/li&gt;&lt;li&gt;Jaquerespeis &lt;a href="https://www.facebook.com/groups/jaquerespeis/?ref=br_rs"&gt;Facebook&lt;/a&gt; &lt;a href="http://jaquerespeis.org/"&gt;Sitio Web&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;&lt;figure&gt;&lt;img alt="" src="https://cdn-images-1.medium.com/max/1024/1*O30l8C8Vy3v4S1VJaL9K4Q.jpeg"&gt;&lt;/figure&gt;&lt;img src="https://medium.com/_/stat?event=post.clientViewed&amp;amp;referrerSource=full_rss&amp;amp;postId=ddfd8062b727" width="1" height="1"&gt;</description><guid>http://www.jaquerespeis.org/en/posts/michijonesmaperespeis6-ddfd8062b727/</guid><pubDate>Wed, 28 Jun 2017 11:06:27 GMT</pubDate></item><item><title>Drupal 8: Pseudo fields, templates and rendering images with links.</title><link>http://www.jaquerespeis.org/en/posts/manati-web-agencyhttps-medium-com-manati-web-agency-drupal-8-pseudo-fields-templates-and-rendering-images-with-links-8d02d083d2f/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;figure&gt;&lt;img alt="" src="https://cdn-images-1.medium.com/max/800/1*i9Lxf4RqvuJbLRf426cb0g.png"&gt;&lt;figcaption&gt;Illustration by &lt;a href="https://medium.com/u/685ec9b9459c"&gt;Lucy Sánchez&lt;/a&gt;&lt;/figcaption&gt;&lt;/figure&gt;&lt;p&gt;&lt;em&gt;Lea este artículo en español: &lt;/em&gt;&lt;strong&gt;&lt;em&gt;Drupal 8&lt;/em&gt;:&lt;/strong&gt; &lt;a href="https://medium.com/p/40870e35970e"&gt;&lt;strong&gt;Pseudocampos, templates y render de imágenes con links.&lt;/strong&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;A few days ago I started the development of a new Drupal 8 site. This site has come with a large set of interesting challenges because a lot of the required functionality is still not easy to implement. As of this moment, there are a lot of contrib modules that are in development, one of them is &lt;a href="https://www.drupal.org/project/group"&gt;&lt;em&gt;group&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Our client requires that every authenticated user can see the groups it belongs to directly from its profile. This feature is required to be done in such a way that you can see the group’s logo, and the logo has to be linked to that group page on the site. I researched alternatives with &lt;em&gt;views&lt;/em&gt; and other contrib modules, but it didn’t bear fruit.&lt;/p&gt;&lt;p&gt;I opted for the custom approach: to create a pseudo field for the users. Such field would use a template in order to print the groups the user belongs to.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Shoulders to the wheel!&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;First we need to create a pseudo field. Let’s remember that pseudo fields are elements that, just like fields, we can manage from the admin interface of each entity, but the difference lies in that the element has only one function: to display information. Contrary to that, a field will store and show information entered by the users.&lt;/p&gt;&lt;p&gt;In Drupal 8 -like Drupal 7- we need to use 2 hooks to create our pseudo field for an entity: &lt;em&gt;hook_entity_extra_field_info()&lt;/em&gt; and&lt;em&gt; hook_[ENTITY NAME]_view().&lt;/em&gt;&lt;/p&gt;&lt;p&gt;&lt;strong&gt;hook_entity_extra_field_info().&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;It tells the entity that there will be a new element available to display. For our case, we’ll implement it like so:&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Implements hook_entity_extra_field_info().&lt;br&gt; */&lt;br&gt;function my_module_entity_extra_field_info() {&lt;br&gt;  $extra = [];&lt;br&gt;  $extra['user']['user']['display']['my_mudule_active_subsites'] = array(&lt;br&gt;    'label' =&amp;gt; new TranslatableMarkup('Active subsites'),&lt;br&gt;    'description' =&amp;gt; new TranslatableMarkup('Show the current subscribed sites by one user'),&lt;br&gt;  );&lt;br&gt;  return $extra;&lt;br&gt;}&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;hook_[ENTITY NAME]_view()&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;In this case, we’re interested in using &lt;em&gt;hook_user_view()&lt;/em&gt; because we’re working with the user type entity. &lt;em&gt;hook_[ENTITY NAME]_view() &lt;/em&gt;basically handles the display of each one of the elements of an entity. In this case, we’ll use it to format our pseudo field &lt;em&gt;my_mudule_active_subsites&lt;/em&gt;.&lt;/p&gt;&lt;p&gt;For Drupal 8, the implementation of this hook varies a bit in the parameters it receives, we can find more documentation here:&lt;/p&gt;&lt;p&gt;&lt;a href="https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Entity%21entity.api.php/function/hook_entity_view/8.2.x"&gt;https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Entity%21entity.api.php/function/hook_entity_view/8.2.x&lt;/a&gt;&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Implements hook_user_view().&lt;br&gt; */&lt;br&gt;function my_module_view(array &amp;amp;$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode, $langcode) {&lt;br&gt;  if ($view_mode === 'full') {&lt;br&gt;    if ($display-&amp;gt;getComponent('my_module_active_subsites')) {&lt;br&gt;      $groups = my_module_user_current_user_groups($entity);&lt;br&gt;      $groups_to_render = my_module_render_groups_images($groups);&lt;br&gt;      $build['my_module_user_active_subsites'] = [&lt;br&gt;        '#theme' =&amp;gt; 'my_module_active_subsites',&lt;br&gt;        '#groups' =&amp;gt; $groups_to_render,&lt;br&gt;      ];&lt;br&gt;    }&lt;br&gt;  }&lt;br&gt;}&lt;/pre&gt;&lt;p&gt;Like the example, we’re using the variable build that we get from the reference, to assign the value to show with our pseudo field. Notice that we created a new index inside the build array, which is a render array. Inside our index we’ll use #theme to indicate that we’re going to use a template, which we’ll define further down the road, and we’ll also use a variable called #groups, which is a variable inside our template.&lt;/p&gt;&lt;p&gt;Now, an important detail: like you can see in our example, we use 2 functions to obtain both the the groups of the user and the preprocessed data ready to be printed by Drupal. The function &lt;em&gt;my_module_user_current_user_groups() &lt;/em&gt;basically returns an array of the entity type group, in which we wont delve. On the contrary, we’ll see the details of &lt;em&gt;my_module_render_groups_images()&lt;/em&gt;.&lt;/p&gt;&lt;h4&gt;my_module_render_groups_images()&lt;/h4&gt;&lt;p&gt;This function was born because of our need to wrap the images in a link, specifically a link to the entity type group. We’ll solve that this way:&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Helper function to render the images with a specific image style.&lt;br&gt; *&lt;br&gt; * @param array $groups&lt;br&gt; *   The entity groups with the images to render.&lt;br&gt; */&lt;br&gt;function my_module_render_groups_images(array $groups) {&lt;br&gt;  $groups_to_render = [];&lt;br&gt;  foreach ($groups as $group) {&lt;br&gt;    $group_item = new Stdclass();&lt;br&gt;    $image_id = $group-&amp;gt;field_site_logo-&amp;gt;target_id;&lt;br&gt;    if (!empty($image_id)) {&lt;br&gt;      $image_render_array = [&lt;br&gt;        '#theme' =&amp;gt; 'image_style',&lt;br&gt;        '#width' =&amp;gt; $group-&amp;gt;field_site_logo-&amp;gt;width,&lt;br&gt;        '#height' =&amp;gt; $group-&amp;gt;field_site_logo-&amp;gt;height,&lt;br&gt;        '#style_name' =&amp;gt; 'site_logo_user_profile',&lt;br&gt;        '#uri' =&amp;gt; $group-&amp;gt;field_site_logo-&amp;gt;entity-&amp;gt;uri-&amp;gt;value,&lt;br&gt;      ];&lt;br&gt;      $renderer = \Drupal::service('renderer');&lt;br&gt;      $renderer-&amp;gt;addCacheableDependency($image_render_array, $group-&amp;gt;field_site_logo-&amp;gt;entity);&lt;br&gt;      $rendered_image = $renderer-&amp;gt;render($image_render_array);&lt;br&gt;      $link_render_array = [&lt;br&gt;        '#type' =&amp;gt; 'link',&lt;br&gt;        '#url' =&amp;gt; Url::fromUri('entity:group/' . $group-&amp;gt;id()),&lt;br&gt;        '#title' =&amp;gt; $rendered_image,&lt;br&gt;      ];&lt;br&gt;      $group_item-&amp;gt;logo = $link_render_array;&lt;br&gt;    }&lt;br&gt;    $groups_to_render[] = $group_item;&lt;br&gt;  }&lt;br&gt;  return $groups_to_render;&lt;br&gt;}&lt;/pre&gt;&lt;p&gt;As you can see in the example, what we do to print our image with a link is: first, prepare a render array to use the &lt;em&gt;image_style&lt;/em&gt; template. After that, we use the service &lt;em&gt;renderer&lt;/em&gt; from Drupal 8 (instead of Drupal_render from Drupal 7) to obtain an render type object, which will be assigned as a value for the &lt;em&gt;title&lt;/em&gt; of our link.&lt;/p&gt;&lt;p&gt;&lt;strong&gt;Defining our twig template&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;Like Drupal 7, if we want to use our own templates inside a module, we need to define it, that is, make Drupal aware that such template exists. For that we’ll use &lt;em&gt;hook_theme()&lt;/em&gt;.&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Implements hook_theme().&lt;br&gt; */&lt;br&gt;function my_module_user_theme($existing, $type, $theme, $path) {&lt;br&gt;  return [&lt;br&gt;    'my_module_user_active_subsites' =&amp;gt; [&lt;br&gt;      'variables' =&amp;gt; [&lt;br&gt;        'groups' =&amp;gt; '',&lt;br&gt;      ],&lt;br&gt;    ],&lt;br&gt;  ];&lt;br&gt;}&lt;/pre&gt;&lt;p&gt;&lt;strong&gt;Creating our template&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;For our final step, we’ll proceed to create our twig template. In order to be recognized, our templates have to be placed in a specific location, with a specific naming convention.&lt;/p&gt;&lt;p&gt;Our templates have to be inside the folder called “templates” in the root of our module and like as I mentioned, have to follow the naming convention: template-name.html.twig. We’ll create the file &lt;em&gt;my-module-active-subsites.html.twig&lt;/em&gt;.&lt;/p&gt;&lt;p&gt;This template will handle the format and will print the images belonging to our groups:&lt;/p&gt;&lt;pre&gt;{#&lt;br&gt;/**&lt;br&gt; * @file&lt;br&gt; * Template file my_module_active_subsites field&lt;br&gt; */&lt;br&gt;#}&lt;/pre&gt;&lt;pre&gt;&amp;lt;div class="container user-groups-container"&amp;gt;&lt;br&gt;   {% if groups is not empty %}&lt;br&gt;     {% for group in groups %}&lt;br&gt;        &amp;lt;div class="container user-groups-element" &amp;gt;&lt;br&gt;          {{ group.logo }}&lt;br&gt;        &amp;lt;/div&amp;gt;&lt;br&gt;     {% endfor %}&lt;br&gt;   {% endif %}&lt;br&gt;&amp;lt;/div&amp;gt;&lt;/pre&gt;&lt;p&gt;As you can see, Twig is very different from what we know before with PHP templates, but this does not mean is complicated. In my case, I used this documentation: &lt;a href="https://www.drupal.org/docs/8/theming/twig/comparison-of-phptemplate-and-twig-theming-paradigms"&gt;https://www.drupal.org/docs/8/theming/twig/comparison-of-phptemplate-and-twig-theming-paradigms&lt;/a&gt;, which is a comparative between what we used to do in PHP template and how we do it with Twig.&lt;/p&gt;&lt;p&gt;Pseudo fields in Drupal 8 -like in Drupal 7- are still a great resource that allows flexibility in the display of our entities. If we add templates in the mix, we can comply with any display requirement for our content. Just be aware that it depends on the type of display we need to use for our content.&lt;/p&gt;&lt;p&gt;Happy coding!&lt;/p&gt;&lt;p&gt;&lt;a href="https://www.estudiomanati.com"&gt;&lt;strong&gt;&lt;em&gt;Manatí&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;strong&gt;&lt;em&gt; is a web consultancy firm from Costa Rica&lt;/em&gt;&lt;/strong&gt;&lt;em&gt;, where we make websites strategically designed to help organization achieve goals.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;&lt;em&gt;Don’t miss out on projects, news and ideas from &lt;/em&gt;&lt;a href="https://www.estudiomanati.com"&gt;&lt;em&gt;Manatí&lt;/em&gt;&lt;/a&gt;&lt;em&gt;. Learn about &lt;/em&gt;&lt;a href="https://www.estudiomanati.com/what-we-do.html"&gt;&lt;em&gt;what we do&lt;/em&gt;&lt;/a&gt;&lt;em&gt;, follow us on &lt;/em&gt;&lt;a href="https://medium.com/manati-web-agency"&gt;&lt;strong&gt;&lt;em&gt;medium&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;em&gt;, &lt;/em&gt;&lt;a href="https://twitter.com/estudiomanati"&gt;&lt;strong&gt;&lt;em&gt;twitter&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;em&gt; and &lt;/em&gt;&lt;a href="https://twitter.com/estudiomanati"&gt;&lt;strong&gt;&lt;em&gt;facebook&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;em&gt;.&lt;/em&gt;&lt;/p&gt;&lt;img src="https://medium.com/_/stat?event=post.clientViewed&amp;amp;referrerSource=full_rss&amp;amp;postId=8d02d083d2f" width="1" height="1"&gt;&lt;hr&gt;&lt;p&gt;&lt;a href="https://medium.com/manati-web-agency/https-medium-com-manati-web-agency-drupal-8-pseudo-fields-templates-and-rendering-images-with-links-8d02d083d2f"&gt;Drupal 8: Pseudo fields, templates and rendering images with links.&lt;/a&gt; was originally published in &lt;a href="https://medium.com/manati-web-agency"&gt;MANATI | Agencia Web&lt;/a&gt; on Medium, where people are continuing the conversation by highlighting and responding to this story.&lt;/p&gt;</description><guid>http://www.jaquerespeis.org/en/posts/manati-web-agencyhttps-medium-com-manati-web-agency-drupal-8-pseudo-fields-templates-and-rendering-images-with-links-8d02d083d2f/</guid><pubDate>Tue, 23 May 2017 22:05:01 GMT</pubDate></item><item><title>Drupal 8: Pseudocampos, templates y render de imágenes con links.</title><link>http://www.jaquerespeis.org/en/posts/manati-web-agencydrupal-8-pseudocampos-templates-y-render-de-imc3a1genes-con-links-40870e35970e/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;figure&gt;&lt;img alt="" src="https://cdn-images-1.medium.com/max/800/1*i9Lxf4RqvuJbLRf426cb0g.png"&gt;&lt;figcaption&gt;Ilustración de &lt;a href="https://medium.com/u/685ec9b9459c"&gt;Lucy Sánchez&lt;/a&gt;&lt;/figcaption&gt;&lt;/figure&gt;&lt;p&gt;&lt;em&gt;Read this article in english:&lt;/em&gt; &lt;a href="https://medium.com/p/8d02d083d2f"&gt;&lt;strong&gt;Drupal 8: Pseudo fields, templates and rendering images with links&lt;/strong&gt;&lt;/a&gt;&lt;strong&gt;.&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;Hace unos días atrás inicie el desarrollo de un nuevo sitio en Drupal 8. Este sitio ha llegado con una gran cantidad de retos interesantes puesto que muchas de las funcionalidades requeridas aún no son sencillas de implementar. En este momento hay muchos módulos &lt;em&gt;contrib que&lt;/em&gt; aun se encuentran en desarrollo, uno de estos módulos es: &lt;a href="https://www.drupal.org/project/group"&gt;&lt;em&gt;group&lt;/em&gt;&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Nuestro cliente requiere que cada usuario autenticado pueda ver los grupos a los que pertenece directamente desde su perfil. Esta funcionalidad tiene que realizase de manera tal que se pudiera ver solamente el logo del grupo, y este logo debe estar enlazado a la página del sitio. Investigué para buscar alternativas con &lt;em&gt;views&lt;/em&gt; u otros módulos contrib, pero la investigación no dio muchos frutos.&lt;/p&gt;&lt;p&gt;Opté por el desarrollo de algo &lt;em&gt;custom:&lt;/em&gt; elegí desarrollar un pseudocampo para los usuarios. Dicho campo utilizará un &lt;em&gt;template&lt;/em&gt; para imprimir dichos grupos.&lt;/p&gt;&lt;h4&gt;Manos a la obra.&lt;/h4&gt;&lt;p&gt;Primero necesitamos crear un pseudocampo. Recordemos que los pseudocampos son elementos que, al igual que un campo, podemos administrar desde la interfaz de despliegue de cada entidad, pero la diferencia radica en que este elemento solo tiene una función: mostrar información, a diferencia de un campo normal que muestra y almacena información brindada por los usuarios.&lt;/p&gt;&lt;p&gt;En drupal 8- como en drupal 7- necesitamos hacer uso de 2 hooks para hacer disponible nuestro pseudocampo para una entidad, estos son: &lt;em&gt;hook_entity_extra_field_info()&lt;/em&gt; y&lt;em&gt; hook_[ENTITY NAME]_view().&lt;/em&gt;&lt;/p&gt;&lt;h4&gt;hook_entity_extra_field_info().&lt;/h4&gt;&lt;p&gt;Indica a la entidad que ahora va a existir un nuevo elemento disponible para su despliegue. Para nuestro caso lo implementamos de la siguiente manera:&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Implements hook_entity_extra_field_info().&lt;br&gt; */&lt;br&gt;function my_module_entity_extra_field_info() {&lt;br&gt;  $extra = [];&lt;br&gt;  $extra['user']['user']['display']['my_mudule_active_subsites'] = array(&lt;br&gt;    'label' =&amp;gt; new TranslatableMarkup('Active subsites'),&lt;br&gt;    'description' =&amp;gt; new TranslatableMarkup('Show the current subscribed sites by one user'),&lt;br&gt;  );&lt;br&gt;  return $extra;&lt;br&gt;}&lt;/pre&gt;&lt;h4&gt;hook_[ENTITY NAME]_view()&lt;/h4&gt;&lt;p&gt;En este caso nos interesa usar &lt;em&gt;hook_user_view() &lt;/em&gt;porque que estamos trabajando con la entidad de tipo usuario. &lt;em&gt;hook_[ENTITY NAME]_view() &lt;/em&gt;básicamente se encarga de manejar el despliegue de cada uno de los elementos de una entidad dada. En este caso lo vamos a utilizar para dar forma a nuestro pseudocampo &lt;em&gt;my_mudule_active_subsites.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;Para drupal 8, la implementación de este hook varía un poco en los parámetros que recibe, podemos encontrar más documentación aquí: &lt;a href="https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Entity%21entity.api.php/function/hook_entity_view/8.2.x"&gt;https://api.drupal.org/api/drupal/core%21lib%21Drupal%21Core%21Entity%21entity.api.php/function/hook_entity_view/8.2.x&lt;/a&gt;&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Implements hook_user_view().&lt;br&gt; */&lt;br&gt;function my_module_view(array &amp;amp;$build, EntityInterface $entity, EntityViewDisplayInterface $display, $view_mode, $langcode) {&lt;br&gt;  if ($view_mode === 'full') {&lt;br&gt;    if ($display-&amp;gt;getComponent('my_module_active_subsites')) {&lt;br&gt;      $groups = my_module_user_current_user_groups($entity);&lt;br&gt;      $groups_to_render = my_module_render_groups_images($groups);&lt;br&gt;      $build['my_module_user_active_subsites'] = [&lt;br&gt;        '#theme' =&amp;gt; 'my_module_active_subsites',&lt;br&gt;        '#groups' =&amp;gt; $groups_to_render,&lt;br&gt;      ];&lt;br&gt;    }&lt;br&gt;  }&lt;br&gt;}&lt;/pre&gt;&lt;p&gt;Como podemos ver en el ejemplo, estamos usando la variable build que nos llega por referencia para asignar a nuestro pseudocampo el valor a mostrar. Nótese que creamos un nuevo índice dentro del arreglo de build que es un arreglo de render. Dentro de nuestro índice usamos #theme para indicar que vamos a hacer uso de un template, el cual definiremos más adelante y también hacemos uso de #groups que es una variable propia de nuestro template.&lt;/p&gt;&lt;p&gt;Ahora, un detalle importante: como se puede apreciar en nuestro ejemplo, se hace uso de 2 funciones para obtener tanto los grupos del usuario como los datos preprocesados listos para ser impresos por drupal. La función &lt;em&gt;my_module_user_current_user_groups() &lt;/em&gt;básicamente retorna un arreglo de entidades de tipo group, por lo cual no ahondaremos en ella. Por el contrario, sí entraremos en detalles con &lt;em&gt;my_module_render_groups_images().&lt;/em&gt;&lt;/p&gt;&lt;h4&gt;&lt;em&gt;my_module_render_groups_images()&lt;/em&gt;&lt;/h4&gt;&lt;p&gt;Esta función nació por la necesidad de que nuestras imágenes estén envueltas en un link, específicamente, un enlace a la entidad de tipo grupo. Lo resolvemos de la siguiente manera:&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Helper function to render the images with a specific image style.&lt;br&gt; *&lt;br&gt; * &lt;a href="http://twitter.com/param"&gt;@param&lt;/a&gt; array $groups&lt;br&gt; *   The entity groups with the images to render.&lt;br&gt; */&lt;br&gt;function my_module_render_groups_images(array $groups) {&lt;br&gt;  $groups_to_render = [];&lt;br&gt;  foreach ($groups as $group) {&lt;br&gt;    $group_item = new Stdclass();&lt;br&gt;    $image_id = $group-&amp;gt;field_site_logo-&amp;gt;target_id;&lt;br&gt;    if (!empty($image_id)) {&lt;br&gt;      $image_render_array = [&lt;br&gt;        '#theme' =&amp;gt; 'image_style',&lt;br&gt;        '#width' =&amp;gt; $group-&amp;gt;field_site_logo-&amp;gt;width,&lt;br&gt;        '#height' =&amp;gt; $group-&amp;gt;field_site_logo-&amp;gt;height,&lt;br&gt;        '#style_name' =&amp;gt; 'site_logo_user_profile',&lt;br&gt;        '#uri' =&amp;gt; $group-&amp;gt;field_site_logo-&amp;gt;entity-&amp;gt;uri-&amp;gt;value,&lt;br&gt;      ];&lt;br&gt;      $renderer = \Drupal::service('renderer');&lt;br&gt;      $renderer-&amp;gt;addCacheableDependency($image_render_array, $group-&amp;gt;field_site_logo-&amp;gt;entity);&lt;br&gt;      $rendered_image = $renderer-&amp;gt;render($image_render_array);&lt;br&gt;      $link_render_array = [&lt;br&gt;        '#type' =&amp;gt; 'link',&lt;br&gt;        '#url' =&amp;gt; Url::fromUri('entity:group/' . $group-&amp;gt;id()),&lt;br&gt;        '#title' =&amp;gt; $rendered_image,&lt;br&gt;      ];&lt;br&gt;      $group_item-&amp;gt;logo = $link_render_array;&lt;br&gt;    }&lt;br&gt;    $groups_to_render[] = $group_item;&lt;br&gt;  }&lt;br&gt;  return $groups_to_render;&lt;br&gt;}&lt;/pre&gt;&lt;p&gt;Como se puede observar en el ejemplo, lo que realizamos para imprimir nuestra imagen con link, fue: primero preparar un arreglo de render para hacer uso del template de &lt;em&gt;image_style&lt;/em&gt;. Luego usamos el servicio &lt;em&gt;renderer &lt;/em&gt;de drupal 8 (remplazo de &lt;em&gt;drupal_render&lt;/em&gt; en drupal 7) para obtener un objeto de tipo &lt;em&gt;renderer,&lt;/em&gt; el cual posteriormente será asignado como valor para el &lt;em&gt;title&lt;/em&gt; de nuestro link.&lt;/p&gt;&lt;h4&gt;Definiendo nuestro twig template.&lt;/h4&gt;&lt;p&gt;Al igual que en drupal 7, si queremos hacer uso de nuestro propio template en un módulo, debemos hacer la definición del mismo, osea, hacerle saber a Drupal que este template existe. Para esto hacemos uso del &lt;em&gt;hook_theme().&lt;/em&gt;&lt;/p&gt;&lt;pre&gt;/**&lt;br&gt; * Implements hook_theme().&lt;br&gt; */&lt;br&gt;function my_module_user_theme($existing, $type, $theme, $path) {&lt;br&gt;  return [&lt;br&gt;    'my_module_user_active_subsites' =&amp;gt; [&lt;br&gt;      'variables' =&amp;gt; [&lt;br&gt;        'groups' =&amp;gt; '',&lt;br&gt;      ],&lt;br&gt;    ],&lt;br&gt;  ];&lt;br&gt;}&lt;/pre&gt;&lt;h4&gt;Creando nuestro template.&lt;/h4&gt;&lt;p&gt;Ahora, como paso final, procederemos a crear nuestro twig template. Para que nuestros templates sean reconocidos debemos colocarlos en una ubicación específica, siguiendo un formato de nombre específico.&lt;/p&gt;&lt;p&gt;Nuestros templates deben estar en una carpeta llamada “templates” en la raíz de nuestro módulo y como mencionamos, deben seguir el siguiente formato de nombre: nombre-template.html.twig. Para nuestro caso creamos el archivo: my-module-active-subsites.html.twig.&lt;/p&gt;&lt;p&gt;Este template se encargará de formatear e imprimir las imágenes pertenecientes a nuestros grupos:&lt;/p&gt;&lt;pre&gt;{#&lt;br&gt;/**&lt;br&gt; * &lt;a href="http://twitter.com/file"&gt;@file&lt;/a&gt;&lt;br&gt; * Template file my_module_active_subsites field&lt;br&gt; */&lt;br&gt;#}&lt;/pre&gt;&lt;pre&gt;&amp;lt;div class="container user-groups-container"&amp;gt;&lt;br&gt;   {% if groups is not empty %}&lt;br&gt;     {% for group in groups %}&lt;br&gt;        &amp;lt;div class="container user-groups-element" &amp;gt;&lt;br&gt;          {{ group.logo }}&lt;br&gt;        &amp;lt;/div&amp;gt;&lt;br&gt;     {% endfor %}&lt;br&gt;   {% endif %}&lt;br&gt;&amp;lt;/div&amp;gt;&lt;/pre&gt;&lt;p&gt;Como podemos observar twig es muy distinto de lo que conocíamos antes en los PHP templates, pero esto no significa que sea complicado. En mi caso me apoyé en esta documentación: &lt;a href="https://www.drupal.org/docs/8/theming/twig/comparison-of-phptemplate-and-twig-theming-paradigms"&gt;https://www.drupal.org/docs/8/theming/twig/comparison-of-phptemplate-and-twig-theming-paradigms,&lt;/a&gt; esta documentación da una comparación entre lo que antes hacíamos con PHP templates y cómo se hace ahora con twig.&lt;/p&gt;&lt;p&gt;Como pudimos ver, los pseudocampos de Drupal 8 al igual que en Drupal 7, siguen siendo un gran recurso que permite dar flexibilidad a nuestros despliegues de entidades. Si a esto le unimos templates, podemos cumplir con cualquier requerimiento de despliegue de nuestro contenido. Solo se debe recordar que el uso de los mismos depende del tipo del despliegue que queramos usar para nuestro contenido.&lt;/p&gt;&lt;p&gt;¡Feliz codificación!&lt;/p&gt;&lt;p&gt;&lt;a href="https://www.estudiomanati.com/"&gt;&lt;strong&gt;&lt;em&gt;Manatí&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;strong&gt;&lt;em&gt; es una firma consultora web de origen costarricense&lt;/em&gt;&lt;/strong&gt;&lt;em&gt;, donde hacemos sitios estratégicamente diseñados para llevar organizaciones a lograr objetivos.&lt;/em&gt;&lt;/p&gt;&lt;p&gt;&lt;em&gt;No se pierdan los proyectos, noticias e ideas de nosotros en Manatí. Conozca más sobre lo que hacemos, síganos en &lt;/em&gt;&lt;a href="https://medium.com/manati-web-agency"&gt;&lt;strong&gt;&lt;em&gt;medium&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;em&gt;, &lt;/em&gt;&lt;a href="https://twitter.com/estudiomanati"&gt;&lt;strong&gt;&lt;em&gt;twitter&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;em&gt; y &lt;/em&gt;&lt;a href="https://twitter.com/estudiomanati"&gt;&lt;strong&gt;&lt;em&gt;facebook&lt;/em&gt;&lt;/strong&gt;&lt;/a&gt;&lt;em&gt;.&lt;/em&gt;&lt;/p&gt;&lt;img src="https://medium.com/_/stat?event=post.clientViewed&amp;amp;referrerSource=full_rss&amp;amp;postId=40870e35970e" width="1" height="1"&gt;&lt;hr&gt;&lt;p&gt;&lt;a href="https://medium.com/manati-web-agency/drupal-8-pseudocampos-templates-y-render-de-im%C3%A1genes-con-links-40870e35970e"&gt;Drupal 8: Pseudocampos, templates y render de imágenes con links.&lt;/a&gt; was originally published in &lt;a href="https://medium.com/manati-web-agency"&gt;MANATI | Agencia Web&lt;/a&gt; on Medium, where people are continuing the conversation by highlighting and responding to this story.&lt;/p&gt;</description><guid>http://www.jaquerespeis.org/en/posts/manati-web-agencydrupal-8-pseudocampos-templates-y-render-de-imc3a1genes-con-links-40870e35970e/</guid><pubDate>Tue, 23 May 2017 22:05:01 GMT</pubDate></item><item><title>“Mapillaryando” en cantinas de San José</title><link>http://www.jaquerespeis.org/en/posts/maperespeis-cantinas/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;div&gt;&lt;p&gt;-- por Marcia Ugarte y Joaquín Lizano&lt;/p&gt;
+&lt;p&gt;Un sábado por la tarde resultó ser el momento perfecto para que un grupo de personas se juntara en San José para iniciar la labor de contribuir al mapeo libre esta vez de cantinas del centro de la capital. Cantina en Costa Rica hace referencia a un bar popular, que posiblemente tenga sus añitos, sin aires snobs y que tiene alcohol y comida a buen precio, o solo alcohol.&lt;/p&gt;
+&lt;p&gt;Este grupo sacrificado trazó un plan de visita y mínimas normas para el proceso de mapeo: tomar máximo una cerveza en cada sitio y comer donde se pudiera ojalá una boca conocida del bar correspondiente. La ruta inició en El Gran Vicio, cantina de toda la vida dentro del Mercado Central; continuó al Ballestero, la única cantina que queda en una de las cuatro esquinas de entrada al San José de antaño y que dicen tiene uno de los mejores chifrijos; luego pasamos a La Embajada, bar chirrión con una barra larga larga y famoso por el gallo de chorizo; después le tocó al turno a El Faro, cantina de 3 pisos con hora feliz de cerveza a menos de mil colones y buena costilla; el siguiente fue La Bohemia, después Wongs y lxs últimxs valientes terminaron de madrugada en Area City.&lt;/p&gt;
+&lt;p&gt;Detallando el recorrido, el punto de inicio, “El Gran Vicio”, es probablemente una de las cantinas más viejas de San José. Ubicado en el Mercado Central de la ciudad, abrió sus puertas en 1880. Podríamos decir que es tan viejo que pareciera que es solo para hombres. El orinal está en una esquina del bar y la puerta no cierra ni abre, está como medio puesta y no resguarda aquella privacidad que se espera de un servicio sanitario. ¿Baño de mujeres? no hay. La pared opuesta a la barra de este espacio, que funciona como un pasillo debido a su estrechez, está llena de firmas, mensajes y memorias gráficas.&lt;/p&gt;
+&lt;iframe width="640" height="480" src="https://embed-v1.mapillary.com/embed?version=1&amp;amp;filter=%5B%22all%22%5D&amp;amp;map_filter=%5B%22all%22%5D&amp;amp;image_key=C_lJZW-k0qYNyz23N4q0-A&amp;amp;client_id=WHJxWW40RWhyVGR6ajVEci1saHZNUTozZDQ5NjRmM2I4ZjBiNjc2&amp;amp;style=photo" frameborder="0"&gt;&lt;/iframe&gt;
+
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;clientela que se conoce entre sí, algunos con sus uniformes de trabajo del mercado&lt;/li&gt;
+&lt;li&gt;el cantinero no era muy amable con los extraños (nosotros…)&lt;/li&gt;
+&lt;li&gt;es un bar de paso (paso a tomarme una cerveza y/o un trago y me voy)&lt;/li&gt;
+&lt;li&gt;interesante experiencia&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;De ahí partimos al “Ballestero”. Pocas cantinas tienen plantas naturales a la entrada. Seña que vamos por una experiencia diferente. Está situada en una de las esquinas del cierre de la calle ancha que da entrada a la ciudad capital desde el Norte. Desde la mesa de la esquina consumimos felices las bocas (dar fe que los patacones con frijoles son de lo mejor de la ciudad) mientras admiramos la bola disco de espejitos en el centro del techo (sin luces dirigidas, sin mecanismos para que gire), un antojo de los dueños para dar simbolismos fiesteros al lugar. Tal vez no combina la bola con la colección de vasos y las fotos familiares en la paredes, tal vez ese es justo el estilo que andaban buscando.&lt;/p&gt;
+&lt;iframe width="640" height="480" src="https://embed-v1.mapillary.com/embed?version=1&amp;amp;filter=%5B%22all%22%5D&amp;amp;map_filter=%5B%22all%22%5D&amp;amp;image_key=0Wdy1J_6R8u573dsK4W8ow&amp;amp;client_id=WHJxWW40RWhyVGR6ajVEci1saHZNUTozZDQ5NjRmM2I4ZjBiNjc2&amp;amp;style=photo" frameborder="0"&gt;&lt;/iframe&gt;
+
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;música texmex&lt;/li&gt;
+&lt;li&gt;chilera de la casa&lt;/li&gt;
+&lt;li&gt;tarjetas de crédito no bienvenidas (pero aceptadas si se insiste mucho)&lt;/li&gt;
+&lt;li&gt;mejor llevar cash&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Debería haber también mención a los trayectos. Las caminatas de unxs jóvenes (y otros no tanto) caminando con sus celulares en posición horizontal y más arriba de sus cabezas, grabando el camino, siguiendo a su “líder” que camina con un báculo tecnológico con un ojo en las alturas. Digamos que no pasamos desapercibidxs por el público josefino. Posiblemente si unx nos viera pasar así de la nada… seguramente que tampoco sabría qué pensar… turistas, extraterrestres, geeks haciendo una peli/docu de chepe, buscando pokemones…?&lt;/p&gt;
+&lt;p&gt;El siguiente bar fue “La Embajada” que terminó siendo denominada la nueva embajada de Mapillary en Costa Rica. Su principal característica es la barra enorme que abarca gran parte del espacio y que da la impresión de que si nos animamos a llegar al final nos comerá la oscuridad, pero no. El fondo está repleto de mesas y hay suficiente espacio para todo el grupo y un mariachi que se acomoda al final de la barra. Realmente sorprende que exista un espacio tan grande y que fácilmente unx pase por fuera sin darse cuenta de lo que hay dentro.&lt;/p&gt;
+&lt;iframe width="640" height="480" src="https://embed-v1.mapillary.com/embed?version=1&amp;amp;filter=%5B%22all%22%5D&amp;amp;map_filter=%5B%22all%22%5D&amp;amp;image_key=o3exL2ctP3FsUdzqFZzqRg&amp;amp;client_id=WHJxWW40RWhyVGR6ajVEci1saHZNUTozZDQ5NjRmM2I4ZjBiNjc2&amp;amp;style=photo" frameborder="0"&gt;&lt;/iframe&gt;
+
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;la birra a 900 parece que era una publicidad vieja que no han eliminado. Costaba 1000&lt;/li&gt;
+&lt;li&gt;barra muy larga&lt;/li&gt;
+&lt;li&gt;los gallos de chorizo o salchichón vienen sin tortilla&lt;/li&gt;
+&lt;li&gt;mariachi compite con “música de cabina”&lt;/li&gt;
+&lt;li&gt;no se separan cuentas&lt;/li&gt;
+&lt;li&gt;muy concurrido&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Seguimos el trayecto en un atardecer que afectaba, dada la cada vez menos luz, la posibilidad de mapear al caminar; pero “sacrificadamente” hicimos todo lo que estaba en nuestras manos para no frenar el mapeo. Caminamos por el puro centro de Chepe y llegamos al Faro. Una vieja edificación de tres pisos con vista al sur de San José. Ya cuan lejos logre ver unx desde este faro dependerá, entre otras cosas, de cuanto se enfieste en el lugar. Cada piso es un ambiente; de hecho, el tercer piso es para fiestas y no está abierto normalmente. Abajo estaba lleno por lo que fuimos al segundo piso, que además tenía un rock/pop ochentero apreciado por la mayoría del grupo. Las ventanas abiertas generaban un nivel de ventolero que, de querer enviajarse, podria referir al faro y ambientarse unx quien sabe donde.&lt;/p&gt;
+&lt;iframe width="640" height="480" src="https://embed-v1.mapillary.com/embed?version=1&amp;amp;filter=%5B%22all%22%5D&amp;amp;map_filter=%5B%22all%22%5D&amp;amp;image_key=WXetF2EpH5my8NQuZNGk_Q&amp;amp;client_id=WHJxWW40RWhyVGR6ajVEci1saHZNUTozZDQ5NjRmM2I4ZjBiNjc2&amp;amp;style=photo" frameborder="0"&gt;&lt;/iframe&gt;
+
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;buena atención&lt;/li&gt;
+&lt;li&gt;separan cuentas&lt;/li&gt;
+&lt;li&gt;aceptan tarjetas&lt;/li&gt;
+&lt;li&gt;distintos ambientes&lt;/li&gt;
+&lt;li&gt;buena música&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Ya enrumbados (más de rumba que de rumbo) bajamos una cuadra y llegamos a La Bohemia. Cantina de tradición hasta para algunxs de lxs miembrxs del grupo mapeante.&lt;/p&gt;
+&lt;iframe width="640" height="480" src="https://embed-v1.mapillary.com/embed?version=1&amp;amp;filter=%5B%22all%22%5D&amp;amp;map_filter=%5B%22all%22%5D&amp;amp;image_key=61pGPoM6EurW4o6BjKsccQ&amp;amp;client_id=WHJxWW40RWhyVGR6ajVEci1saHZNUTozZDQ5NjRmM2I4ZjBiNjc2&amp;amp;style=photo" frameborder="0"&gt;&lt;/iframe&gt;
+
+&lt;blockquote&gt;
+&lt;ul&gt;
+&lt;li&gt;fácil sentirse bienvenidx en el lugar&lt;/li&gt;
+&lt;li&gt;fuerte conexión entre los clientes habituales&lt;/li&gt;
+&lt;li&gt;hasta nos regalaron del queque de un cumpleaños que estaban celebrando&lt;/li&gt;
+&lt;li&gt;pocas bocas&lt;/li&gt;
+&lt;li&gt;separan cuentas&lt;/li&gt;
+&lt;li&gt;aceptan tarjetas&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;Ya para esas horas de la noche, el trayecto se hacía inmapeable pero la intención sacrificada no se acababa. Fuimos a chequear otro par de lugares que podríamos incluir en futuras misiones. Wongs es un restaurante más que una cantina y en lugar de bocas fueron dumplings, generando un momento de excepción en la ruta. Terminamos en la madrugada del día siguiente en Area City celebrando ya un cumpleaños de alguien de nuestro grupo mapeante. Gran salida que, de seguir con ese espíritu festivo, puede generar muchxs sacrificadxs voluntarixs futurxs que nos permitan conocer más de esas cantinas tradicionales que aún quedan en San José.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://ia601502.us.archive.org/18/items/maperespeis-bares/san_jose/la_embajada/C87imwsUAAACDw7.jpglarge.jpeg"&gt;&lt;img alt="La embajada de Mapillary en Costa Rica" src="https://ia601502.us.archive.org/18/items/maperespeis-bares/san_jose/la_embajada/C87imwsUAAACDw7.jpglarge.jpeg"&gt;&lt;/a&gt;&lt;/p&gt;&lt;/div&gt;</description><guid>http://www.jaquerespeis.org/en/posts/maperespeis-cantinas/</guid><pubDate>Tue, 16 May 2017 18:18:31 GMT</pubDate></item><item><title>Minar ethereum</title><link>http://www.jaquerespeis.org/en/posts/postsminar-ethereum/</link><dc:creator>JáquerEspeis</dc:creator><description>&lt;div&gt;&lt;h2&gt;Requerimientos&lt;/h2&gt;
+&lt;ul&gt;
+&lt;li&gt;Minador&lt;/li&gt;
+&lt;li&gt;Ubuntu Server 16.04&lt;/li&gt;
+&lt;li&gt;Opcional(tarjeta de video)&lt;/li&gt;
+&lt;li&gt;Python y python-twisted&lt;/li&gt;
+&lt;li&gt;Ethereum&lt;/li&gt;
+&lt;li&gt;cpp-ethereum&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;NOTA:&lt;/strong&gt; Se considera Ubuntu Server, en caso de Ubuntu Desktop algunos requerimientos ya vienen instalados en el sistema.&lt;/em&gt;&lt;/p&gt;
+&lt;h2&gt;Instalación&lt;/h2&gt;
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Instalar ubuntu 16.04&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Instalar python y python-wisted&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;sudo apt-get install python
+sudo apt-get install python-twisted
+&lt;/pre&gt;
+
+
+&lt;ol&gt;
+&lt;li&gt;Un vez que se tiene instalado el sistema operativo, activar el ppa de ethereum&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;sudo add-apt-repository ppa:ethereum/ethereum
+sudo add-apt-repository ppa:ethereum/ethereum-qt
+sudo add-apt-repository ppa:ethereum/ethereum-dev
+sudo apt-get update
+&lt;/pre&gt;
+
+
+&lt;ol&gt;
+&lt;li&gt;Instalar ethereum&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;sudo apt-get install ethereum
+&lt;/pre&gt;
+
+
+&lt;ol&gt;
+&lt;li&gt;Instalar cpp-ethereum&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;sudo apt-get install cpp-ethereum
+&lt;/pre&gt;
+
+
+&lt;ol&gt;
+&lt;li&gt;
+&lt;p&gt;Clonar el repositorio de &lt;a href="https://github.com/Atrides/eth-proxy"&gt;eth-proxy&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Crear un wallet con &lt;a href="https://github.com/ethereum/go-ethereum/wiki/geth"&gt;geth&lt;/a&gt; o &lt;a href="https://github.com/paritytech/parity"&gt;parity&lt;/a&gt;.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Instalar los drivers de vídeo, en el caso de usar una tarjeta de vídeo.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;Modificar el archivo de configuración de eth-proxy para usar el wallet.&lt;/p&gt;
+&lt;/li&gt;
+&lt;li&gt;
+&lt;p&gt;En el directorio eth-proxy, ejecutar &lt;code&gt;eth-proxy.py&lt;/code&gt;&lt;/p&gt;
+&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;sudo python eth-proxy/eth-proxy.py
+&lt;/pre&gt;
+
+
+&lt;ol&gt;
+&lt;li&gt;Ejecutar &lt;code&gt;ethminer&lt;/code&gt; apuntando a localhost&lt;/li&gt;
+&lt;/ol&gt;
+&lt;pre class="code literal-block"&gt;&lt;span&gt;&lt;/span&gt;ethminer -F http://127.0.0.1:8080/minador -G
+&lt;/pre&gt;
+
+
+&lt;p&gt;&lt;em&gt;&lt;strong&gt;NOTA:&lt;/strong&gt; La opción &lt;code&gt;-G&lt;/code&gt; indica a ethminer que utilice GPU para minar, en caso de no contar con GPU utilice &lt;code&gt;--allow-opencl-cpu&lt;/code&gt;.&lt;/em&gt;&lt;/p&gt;
+&lt;h2&gt;Referencias&lt;/h2&gt;
+&lt;p&gt;https://github.com/paritytech/parity
+https://github.com/Atrides/eth-proxy
+https://launchpad.net/~ethereum/+archive/ubuntu/ethereum
+http://ethdocs.org/en/latest/ethereum-clients/cpp-ethereum/installing-binaries/linux-ubuntu-ppa.html&lt;/p&gt;&lt;/div&gt;</description><guid>http://www.jaquerespeis.org/en/posts/postsminar-ethereum/</guid><pubDate>Fri, 31 Mar 2017 00:03:00 GMT</pubDate></item></channel></rss>

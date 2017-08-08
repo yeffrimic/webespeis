@@ -1,0 +1,20 @@
+<html><body><p><strong>Actualización:</strong> Se recomienda seguir las guías actualizadas que permiten configurar firma digital para todos los usuarios del sistema. Esta guía ya ha quedado anticuada, no se recomienda porque requiere configurarlo para cada nuevo usuario.</p>
+<p>Evolution es la suite de trabajo en grupo del escritorio GNOME. Dispone de correo electrónico, contactos, calendario, tareas y notas, que se integran con las cuentas del sistema.</p>
+<p>Se puede configurar para utilizar el sistema de Firma Digital de Costa Rica y enviar correos firmados. Esta característica está documentada en el <a href="https://www.soportefirmadigital.com/">centro de soporte de Firma Digital</a> para la aplicación Mozilla Thunderbird. Sin embargo, no existe una guía para configurarla para Evolution, si bien configurarla no es tan amigable en versiones actuales.</p>
+<p>Evolution ofrece facilidades para configurar certificados desde ficheros de certificado (PKCS#12) pero en el caso de Firma Digital se requiere un módulo (PKCS#11) y <strong>la interfaz gráfica no tiene la opción</strong>, por lo que hay que seguir los siguientes pasos:</p>
+<p>Agregar confianza a los certificados de Firma Digital en el menú Editar -&gt; Preferencias -&gt; icono Certificados -&gt; Pestaña Autoridades -&gt; Importar del mismo modo que se hace con Firefox o con Thunderbird.</p>
+<p>Cerrar Evolution si está abierto para evitar problemas de bloqueo y concurrencia en la base de datos.</p>
+<p>Asociar el módulo PKCS#11 de Firma Digital a la base de datos:</p>
+<pre>modutil -add "Firma Digital" -libfile /ruta/al/modulo/libASEP11.so -dbdir ~/.pki/nssdb/</pre>
+<p>Reemplazar la ruta hacia <kbd>libASEP11.so</kbd> del ejemplo por la adecuada.</p>
+<p>Editar el archivo pkcs11.txt:</p>
+<pre>gedit ~/.pki/nssdb/pkcs11.txt</pre>
+<p>Agregar dos líneas nuevas al principio y no borrar las existentes:</p>
+<pre>library=/ruta/al/modulo/libASEP11.so
+name=Firma Digital
+</pre>
+<p>Reemplazar la ruta hacia <kbd>libASEP11.so</kbd> del ejemplo por la adecuada (la misma que se haya indicado en el paso anterior).</p>
+<p>Guardar los cambios y cerrar gedit. Abrir Evolution. Si todo ha ido bien pedirá el PIN del dispositivo.</p>
+<p>Seleccionar el certificado en Editar -&gt; Preferencias -&gt; icono Cuentas de correo -&gt; seleccionar la cuenta en uso -&gt; Editar -&gt; Seguridad -&gt; MIME seguro (S/MIME) -&gt; Certificado de firma -&gt; Seleccionar</p>
+<p>Si aparece ya se podrán firmar los mensajes digitalmente con validez legal en el país.</p>
+<p>Se recomienda utilizar un algoritmo de firma SHA256 o superior.</p></body></html>

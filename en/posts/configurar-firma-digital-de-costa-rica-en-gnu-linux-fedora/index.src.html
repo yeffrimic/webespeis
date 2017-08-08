@@ -1,0 +1,59 @@
+<html><body><p><strong>Actualización 2:</strong> esta guía ha quedado obsoleta, se recomienda seguir la guía para Fedora 24, que probablemente también funcione para Fedora 23, incluye cómo instalar los certificados y funcionalidad para todos los usuarios del sistema.</p>
+<p><strong>Actualización:</strong> la configuración del XML de esta guía ya no es necesaria si se instala el RPM del nuevo instalador que proporciona el centro de soporte de Firma Digital. Antes el instalador solamente incluía paquetes DEB.</p>
+<h2>Requerimientos</h2>
+<p>Instalar el controlador del lector de tarjetas y sus dependencias:</p>
+<pre>sudo dnf -y install pcsc-lite-ccid</pre>
+<p>Iniciar el servicio <kbd>pcscd</kbd> si no lo está:</p>
+<pre>sudo systemctl start pcscd</pre>
+<p>Para asegurarse de que el servicio <kbd>pcscd</kbd> se inicie al arrancar el sistema:</p>
+<pre>sudo systemctl enable pcscd</pre>
+<h2>Descarga</h2>
+<p>Descargar el “instalador” para usuarios Linux en la sección de descargas del <a href="https://www.soportefirmadigital.com/">centro de soporte de Firma Digital</a> y descomprimir el zip.</p>
+<h2>Solución de problemas</h2>
+<p>Para que el módulo PKCS#11 funcione correctamente con las tarjetas inteligentes de Firma Digital más recientes se tiene que crear un archivo XML en una ruta específica del sistema:</p>
+<pre>sudo mkdir /etc/Athena
+sudo gedit /etc/Athena/IDPClientDB.xml
+</pre>
+<p>En la ventana del editor de textos gedit, pegar el siguiente texto:</p>
+<pre>&lt;?xml version="1.0" encoding="utf-8" ?&gt;
+&lt;IDProtect&gt;
+ &lt;TokenLibs&gt;
+  &lt;IDProtect&gt;
+   &lt;Cards&gt;
+    &lt;IDProtectXF&gt;
+     &lt;ATR type='hexBinary'&gt;3BDC00FF8091FE1FC38073C821106600000000000000&lt;/ATR&gt;
+     &lt;ATRMask type='hexBinary'&gt;FFFF00FFF0FFFFFFFFFFFFFFFFF0FF00000000000000&lt;/ATRMask&gt;
+    &lt;/IDProtectXF&gt;
+   &lt;/Cards&gt;
+  &lt;/IDProtect&gt;
+ &lt;/TokenLibs&gt;
+&lt;/IDProtect&gt;
+</pre>
+<p>Guardar. Ahora ya está lista para probar.</p>
+<p>Se pueden seguir los pasos de configuración del módulo indicados en el sitio web del centro de soporte de Firma Digital para Firefox si así se desea.</p>
+<h2>Prueba</h2>
+<p>Para comprobar por línea de comandos si el módulo PKCS#11 reconoce la tarjeta:</p>
+<p>Instalar el paquete <kbd>opensc</kbd>, que proporciona la herramienta <kbd>pkcs11-tool</kbd>:</p>
+<pre>sudo dnf -y install opensc</pre>
+<p>Realizar una prueba de listado de objetos, que pedirá el PIN:</p>
+<pre>pkcs11-tool --module "~/Descargas/Firma Digital/Firma Digital/Libreria/x64/libASEP11.so" -l -O</pre>
+<p>Reemplazar la ruta hacia <kbd>libASEP11.so</kbd> del ejemplo por la adecuada.</p>
+<p>Si funcionó correctamente deberá mostrar que existen 2 certificados y 2 claves. Ejemplo de la salida:</p>
+<pre>Using slot 0 with a present token (0x0)
+Logging in to "IDProtect#XXXXXXXXXXXXXXXX".
+Please enter User PIN:
+Certificate Object, type = X.509 cert
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Certificate Object, type = X.509 cert
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Private Key Object; RSA
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Usage: decrypt, sign
+Private Key Object; RSA
+label: XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXXXXX
+ID: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+Usage: sign
+</pre></body></html>
